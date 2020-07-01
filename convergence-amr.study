@@ -2,6 +2,10 @@
 LEVELS = 2
 RF = 2
 BASEMM = 50
-STHICK = 2
-
 BGAP = 0, 0.5
+
+STHICK = 2
+{
+SWIDTH = 4, 8
+DIAMETER = 2,4
+}

@@ -13,7 +13,7 @@
 // CELLX = 4.0* 50 = 200
 // CELLY = 200 * 5/4 = 250.
 
-
+//make substrate width some factor of projectile diameter. 
 
 Problem/materials {Projectile = SolidEntropyBasedStretch_0, Plate = SolidEntropyBasedStretch_0, Paint = SolidEntropyBasedStretch_1, Void = Vacuum}
 
@@ -25,16 +25,18 @@ CELLX  {$BASEMM * ((xdom)/(1.e-3))}
 CELLY  {$BASEMM * ((ydom)/(1.e-3))}
 LEVELS {$LEVELS}
 
-xdom {$STHICK.MM * 2}
-ydom {3.0MM + $STHICKMM + $BGAPMM} 
+xdom {$SWIDTHMM}
+ydom {$DIAMETERMM + 1MM + $STHICKMM + $BGAPMM} 
+
+DIAMETER {$DIAMETERMM}
 
 MM {e-3} 
 GAP {0.025MM}
 ROTFREQ {0} // Rotational frequency of the block
 ANGLE {90}
-RADIUS {2MM/2} 
+RADIUS {DIAMETER/2} 
 PTHICK {0.10MM}
-STHICK {$STHICK.MM}
+STHICK {$STHICKMM}
 BGAP {$BGAPMM} // gap between the bottom of the plate and the boundary
 CENTREX {0.0MM}
 CENTREY {PTHICK + RADIUS + GAP}
@@ -86,7 +88,7 @@ LevelSetSolver/singleReinitialisation {false}
 
 CoordMapping/Cartesian/active {true}
 CoordMapping/Cartesian/domainMinimum { 0.0MM, -STHICK - BGAP}
-CoordMapping/Cartesian/domainMaximum { xdom, 3.0MM }
+CoordMapping/Cartesian/domainMaximum { xdom, DIAMETER + 1MM }
 
 System/vacuumSpecialCase {true}
 
