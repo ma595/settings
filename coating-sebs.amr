@@ -20,12 +20,12 @@ Problem/materials {Projectile = SolidEntropyBasedStretch_0, Plate = SolidEntropy
 VELMAG {35}
 ANGLE  {90}
 
-CELLX  {$BASEMM * xdom}
-CELLY  {CELLX * ydom/xdom}
+CELLX  {$BASEMM * ((xdom)/(1.e-3))}
+CELLY  {CELLX * ((ydom)/(xdom))}
 LEVELS {$LEVELS}
 
-xdom {STHICK * 2}
-ydom {3.0MM + STHICK + BGAP} 
+xdom {$STHICK.MM * 2}
+ydom {3.0MM + $STHICK.MM + $BGAP.MM} 
 
 MM {e-3} 
 GAP {0.025MM}
@@ -33,8 +33,8 @@ ROTFREQ {0} // Rotational frequency of the block
 ANGLE {90}
 RADIUS {2MM/2} 
 PTHICK {0.10MM}
-STHICK {$STHICK MM}
-BGAP {$BGAP} // gap between the bottom of the plate and the boundary
+STHICK {$STHICK.MM}
+BGAP {$BGAP.MM} // gap between the bottom of the plate and the boundary
 CENTREX {0.0MM}
 CENTREY {PTHICK + RADIUS + GAP}
 PARTICLE {Circle{x=CENTREX, y=CENTREY, r=RADIUS}}
@@ -47,10 +47,10 @@ Plate/maxPlasticIterations {10}
 Paint/maxPlasticIterations {10}
 Plate/yieldTolerance {1e-3}
 Paint/yieldTolerance {1e-3}
-HLLD {false}
-Interface/ProjectilePlate {interface=slip, useHLLD=HLLD}
-Interface/ProjectilePaint {interface=slip, useHLLD=HLLD}
-Interface/PaintPlate {interface=stick, useHLLD=HLLD}
+hlld {false}
+Interface/ProjectilePlate {interface=slip, useHLLD=hlld}
+Interface/ProjectilePaint {interface=slip, useHLLD=hlld}
+Interface/PaintPlate {interface=stick, useHLLD=hlld}
 
 TIMESERIES {false}
 //-----------------------------------------------------------------------------------------------------------------
@@ -84,7 +84,7 @@ LevelSetMethod/WENO/active {true}
 LevelSetSolver/singleReinitialisation {false}
 
 CoordMapping/Cartesian/active {true}
-CoordMapping/Cartesian/domainMinimum { 0.0MM, -STHICK }
+CoordMapping/Cartesian/domainMinimum { 0.0MM, -STHICK - BGAP}
 CoordMapping/Cartesian/domainMaximum { xdom, 3.0MM }
 
 System/vacuumSpecialCase {true}
@@ -108,15 +108,16 @@ FluxMethod/MUSCLHancock/solver {HLL}
 
 ODEMethod/RK2/active {true}
 
-Output/directory {/home/ma595/output/coating/axi/plastic_plateandJCcoating/amr/}
+Output/directory {/home/ma595/output/coating/axi/boundaryeffects/}
 Output/interval {2e-06}
 
 Output/VisIt/active {true}
 Output/VisIt/filename {pp}
-/* Output/VisIt/times {0.2e-6, 0.4e-06, 0.6e-06, 0.8e-06, 1e-06, 1.1e-06, 1.2e-06, 1.3e-06} */
-/* Output/VisIt/times {0.1e-6, 0.2e-6, 0.3e-6, 0.4e-06} */
+/* /1* Output/VisIt/times {0.2e-6, 0.4e-06, 0.6e-06, 0.8e-06, 1e-06, 1.1e-06, 1.2e-06, 1.3e-06} *1/ */
+/* /1* Output/VisIt/times {0.1e-6, 0.2e-6, 0.3e-6, 0.4e-06} *1/ */
 Output/VisIt/outputAllVars {false}
 Output/VisIt/outputGhost {true} 
+
 
 Output/Checkpoint/active { true }
 Output/Checkpoint/filename {checkpoint}
