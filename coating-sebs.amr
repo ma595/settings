@@ -20,8 +20,8 @@ Problem/materials {Projectile = SolidEntropyBasedStretch_0, Plate = SolidEntropy
 VELMAG {35}
 ANGLE  {90}
 
-CELLX  {$BASEMM * ((xdom)/(1.e-3))}
 /* CELLY  {CELLX * ((ydom)/(xdom))} */
+CELLX  {$BASEMM * ((xdom)/(1.e-3))}
 CELLY  {$BASEMM * ((ydom)/(1.e-3))}
 LEVELS {$LEVELS}
 
@@ -103,7 +103,7 @@ Amr/loadBalanceFrequency { 10 }
 Amr/bufferWidth { 2 }
 Amr/interpolation {linear}
 Amr/startTime { 0.0 }
-Amr/finalTime { 1.0e-05 }
+Amr/finalTime { 2.0e-05 }
 
 FluxMethod/MUSCLHancock/active {true}
 FluxMethod/MUSCLHancock/limiter {van-Leer}
@@ -173,7 +173,7 @@ Output/TimeSeries-1/points {Line{start={-5MM, 1.0MM - (0.1MM)/(pow($LEVELS+1,2)*
 Output/SettingsFile/active {true}
 Output/SettingsFile/filename {settings}
 
-GEOM {Rectangle {X1=-1.2MM, X2=1.0MM, Y1=-0.3MM, Y2=0.3MM}}
+GEOM {Rectangle {X1=-1.2MM, X2=DIAMETER/2.0, Y1=-0.3MM, Y2=0.3MM}}
 
 System/flagMaterialsMaxLevel {LEVELS, LEVELS, LEVELS, LEVELS}
 System/boundaryFlagRegion {1} //default 0.75 
