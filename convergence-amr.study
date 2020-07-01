@@ -1,6 +1,7 @@
 
 LEVELS = 2
 RF = 2
-BASEMM = 25
+BASEMM = 50
 STHICK = 2
-BGAP = 0
+
+BGAP = 0, 0.5

@@ -21,11 +21,12 @@ VELMAG {35}
 ANGLE  {90}
 
 CELLX  {$BASEMM * ((xdom)/(1.e-3))}
-CELLY  {CELLX * ((ydom)/(xdom))}
+/* CELLY  {CELLX * ((ydom)/(xdom))} */
+CELLY  {$BASEMM * ((ydom)/(1.e-3))}
 LEVELS {$LEVELS}
 
 xdom {$STHICK.MM * 2}
-ydom {3.0MM + $STHICK.MM + $BGAP.MM} 
+ydom {3.0MM + $STHICKMM + $BGAPMM} 
 
 MM {e-3} 
 GAP {0.025MM}
@@ -34,7 +35,7 @@ ANGLE {90}
 RADIUS {2MM/2} 
 PTHICK {0.10MM}
 STHICK {$STHICK.MM}
-BGAP {$BGAP.MM} // gap between the bottom of the plate and the boundary
+BGAP {$BGAPMM} // gap between the bottom of the plate and the boundary
 CENTREX {0.0MM}
 CENTREY {PTHICK + RADIUS + GAP}
 PARTICLE {Circle{x=CENTREX, y=CENTREY, r=RADIUS}}
