@@ -42,9 +42,9 @@ CENTREX {0.0MM}
 CENTREY {PTHICK + RADIUS + GAP + STHICK}
 PARTICLE {Circle{x=CENTREX, y=CENTREY, r=RADIUS}}
 PLATE {Rectangle {X1=-1.0MM, X2=15MM, Y1=0, Y2=STHICK}}
-PAINT {Rectangle {X1=-1.0MM, X2=15MM, Y1=STHICK, Y2=PTHICK}}
+PAINT {Rectangle {X1=-1.0MM, X2=15MM, Y1=STHICK, Y2=STHICK+PTHICK}}
 SUPPORT1 {Rectangle {X1=0.2MM, X2=0.4MM, Y1=0, Y2=STHICK}}
-SUPPORT2 {Rectangle {X1=$SWIDTHMM/2, X2=$SWITHMM/2 + 0.2MM, Y1=0, Y2=STHICK}}
+SUPPORT2 {Rectangle {X1=$SWIDTHMM/2, X2=$SWIDTHMM/2 + 0.2MM, Y1=0, Y2=STHICK}}
 
 PLATES {Union {PLATE, SUPPORT1, SUPPORT2}}
 
@@ -115,7 +115,7 @@ FluxMethod/MUSCLHancock/solver {HLL}
 
 ODEMethod/RK2/active {true}
 
-Output/directory {/home/ma595/output/coating/axi/boundaryeffects/}
+Output/directory {/home/ma595/output/coating/axi/boundaryeffects/support-ve/}
 Output/interval {2e-06}
 
 Output/VisIt/active {true}
