@@ -131,7 +131,7 @@ Output/SettingsFile/active {true}
 Output/SettingsFile/filename {settings}
 
 // Output : Timeseries
-TIMESERIES {false}
+TIMESERIES {true}
 Output/TimeSeries/instances {2}
 
 DELTA {xdom / CELLX}
@@ -147,7 +147,7 @@ Output/TimeSeries/filename {velocity-out}
 Output/TimeSeries/fixed {false}
 
 // lagrangian point tracking the movement of the plate. 
-Output/TimeSeries-1/active {true}
+Output/TimeSeries-1/active {TIMESERIES}
 Output/TimeSeries-1/variables {Plate:v, Plate:sigma}
 Output/TimeSeries-1/interval {5e-8}
 Output/TimeSeries-1/continuousOutput {false}
