@@ -1,0 +1,169 @@
+//------------------------------------------------------------------------------------------------
+// 4.76mm diameter Sphere on 3mm x 10mm plate Sundararajan 
+// Testing steel(elastic) on copper(perfect). 
+// plate surface is at y = 0 
+//------------------------------------------------------------------------------------------------
+
+Problem/materials {Ball = SolidEntropyBasedStretch_0, Plate = SolidEntropyBasedStretch_1, Void = Vacuum}
+MM {e-3} 
+
+
+// simulation domain
+CoordMapping/Cartesian/active {true}
+CoordMapping/Cartesian/domainMinimum { 0MM, -3.0MM }
+CoordMapping/Cartesian/domainMaximum { 5.0MM,  5.0MM }
+
+// simulation parameters
+CELLX  {$CELLX}
+CELLY  {$CELLX * 8/5}
+LEVELS {0}
+TIME   {$TIME}
+// Plate
+YSURFACE {0}
+GAP {$VEL*1e-6}
+PLATE {Rectangle {X1=-15MM, X2=15MM, Y1=-4.0MM, Y2=YSURFACE}}
+
+// Ball parameters
+VELMAG {$VEL}
+ANGLE  {90}
+ROTFREQ {0} 
+RADIUS {4.76MM/2}
+CENTREX {0.0MM}
+CENTREY {RADIUS}
+BALL {Circle{x=CENTREX, y=CENTREY + GAP, r=RADIUS}}
+
+// simulation objects 
+Problem/regions { BALL, PLATE }
+
+// Materials
+Ball/elastic {MGS_HardSteel}
+Ball/plastic { None {}}
+Plate/elastic {$EL}
+Plate/plastic {$PL}
+
+// Initial data
+Ball:InitialData/UserDefined2D/active {true}
+Ball:InitialData/UserDefined2D/state { v_r=-VELMAG*cos(ANGLE/180*M_PI) + ROTFREQ*2*PI*(r-(CENTREX)),v_z=-VELMAG*sin(ANGLE/180*M_PI) + ROTFREQ*2*PI*(z-(CENTREY))}
+Plate:InitialData/Uniform/active {true}
+Plate:InitialData/Uniform/state { v_r=0.0,v_z=0}
+
+// Boundary conditions
+MaterialBoundaryCondition/RiemannGhostFluid/useGhostFluidVelocity {true}
+MaterialBoundaryCondition/RiemannGhostFluid/modifyState {outside}
+MaterialBoundaryCondition/RiemannGhostFluid/active {true}
+LevelSetMethod/WENO/active {true}
+LevelSetSolver/singleReinitialisation {false}
+
+// Amr 
+Amr/cells { CELLX, CELLY }
+Amr/boundaryConditions { { reflective{reflect}, reflective{weld}}, { reflective{weld}, transmissive } }
+Amr/CFL { 0.8 }
+Amr/maxRefinementLevel { LEVELS }
+Amr/refinementFactors { 2,2,2,2,2 }
+Amr/regridFrequency { 2 }
+Amr/loadBalanceFrequency { 100 }
+Amr/bufferWidth { 2 }
+Amr/interpolation {linear}
+Amr/startTime { 0.0 }
+Amr/finalTime { TIME }
+
+// Amr : Material flagging 
+/* Paint:Flagging/AllMaterial/active {true} */
+/* Paint:Flagging/AllMaterial/maxRefinementLevel {$LEVELS} */
+/* Paint:Flagging/AllMaterial/region {GEOM} */
+System/flagMaterialsMaxLevel {LEVELS, LEVELS, LEVELS} 
+System/boundaryFlagRegion {0.90} //default 0.75 
+GEOM {Rectangle {X1=-0.75MM, X2=0.75MM, Y1=0.5MM, Y2=0.8MM}} 
+System/flagMaterialsRegion {GEOM, GEOM, GEOM} 
+System/flagMaterials {true, true, true} 
+
+// Interface boundary conditions
+Interface/BallPlate {interface=$IBC, useHLLD=true}
+
+// Numerical method(s)
+FluxMethod/MUSCLHancock/active {true}
+FluxMethod/MUSCLHancock/limiter {van-Leer}
+FluxMethod/MUSCLHancock/solver {HLL}
+ODEMethod/RK2/active {true}
+
+// Loadbalancing
+LoadBalance/Zoltan/active {true}
+LoadBalance/Zoltan/method {RecursiveCoordBisection}
+LoadBalance/Zoltan/separateLevelWeighting {true}
+LoadBalance/Zoltan/useHierarchy {false} 
+LoadBalance/blockSize { 5 }  
+
+// Output base options
+Output/directory {/home/ma595/output/axi-clean/sund/}
+Output/interval { 1e-05 }
+// Output : Visit 
+Output/VisIt/active {true}
+Output/VisIt/filename {axi_sund}
+Output/VisIt/outputAllVars {true}
+Output/VisIt/outputGhost {true}
+/* Output/VisIt/times {0.2e-6, 0.4e-06, 0.6e-06, 0.8e-06, 1e-06, 1.1e-06, 1.2e-06, 1.3e-06} */
+/* Output/VisIt/times {0.1e-6, 0.2e-6, 0} */
+
+// Output : Checkpoint
+Output/Checkpoint/active { true }
+Output/Checkpoint/filename {checkpoint}
+Output/Checkpoint/interval {5.0e-06}
+
+// Output : Energy conservation
+Output/Integrate/active {true}
+Output/Integrate/filename {integrateVariables}
+Output/Integrate/interval {2.5e-8}
+Output/Integrate/variables {
+  Ball:rho, Ball:rhoE, Ball:rhoU, Ball:rhokinE, Ball:U, Ball:kinE, 
+  Ball:v,Plate:rho, Plate:rhoE, Plate:rhoU, Plate:rhokinE, Plate:U, Plate:kinE, Plate:v, Ball:energyS, 
+  Ball:energyH, Plate:energyS, Plate:energyH
+} 
+
+// Output : Settings file
+Output/SettingsFile/active {true} 
+Output/SettingsFile/filename {settings}
+
+DELTA {8.0MM/(CELLY)}
+Output/TimeSeries/points { Points { {CENTREX, CENTREY + GAP}, {CENTREX, CENTREY - RADIUS + GAP + DELTA} }}
+Output/TimeSeries/filename {velocity-out}
+Output/TimeSeries/fixed {false}
+
+Output/TimeSeries-1/active {true}
+Output/TimeSeries-1/variables {Plate:v, Plate:sigma}
+Output/TimeSeries-1/interval {5e-8}
+Output/TimeSeries-1/continuousOutput {false}
+Output/TimeSeries-1/timedependent {true}
+Output/TimeSeries-1/frequency {0}
+Output/TimeSeries-1/points { Points { {CENTREX, -DELTA} } }
+Output/TimeSeries-1/filename {interface_point_timedependent}
+Output/TimeSeries-1/fixed {false}
+
+Output/TimeSeries-2/active {true}
+Output/TimeSeries-2/variables {Plate:v, Plate:sigma}
+Output/TimeSeries-2/interval {5e-8}
+Output/TimeSeries-2/continuousOutput {false}
+Output/TimeSeries-2/constrain {r}
+Output/TimeSeries-2/frequency {0}
+Output/TimeSeries-2/points { Points { {CENTREX, -DELTA} } }
+Output/TimeSeries-2/filename {interface_point_constrain}
+Output/TimeSeries-2/fixed {false}
+
+
+Output/TimeSeries-3/active {true}
+Output/TimeSeries-3/variables {Plate:v, Plate:sigma}
+/* Output/TimeSeries-3/interval {5e-8} */
+Output/TimeSeries-3/continuousOutput {true}
+Output/TimeSeries-3/frequency {0}
+Output/TimeSeries-3/points { Points { {CENTREX, -DELTA} } }
+Output/TimeSeries-3/filename {interface_point_continuous}
+Output/TimeSeries-3/fixed {false}
+
+TIMESERIES {true}
+Output/TimeSeries-4/active {TIMESERIES}
+Output/TimeSeries-4/filename {interfaceMonitor-2}
+Output/TimeSeries-4/fixed {false}
+Output/TimeSeries-4/frequency {0}
+Output/TimeSeries-4/interval {5e-8}
+Output/TimeSeries-4/continuousOutput {false}
+Output/TimeSeries-4/variables {Plate:sigma}
+Output/TimeSeries-4/points {Line{start={-5MM, -DELTA}, end={5MM, -DELTA}, points=CELLX}}
