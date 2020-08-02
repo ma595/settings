@@ -9,7 +9,7 @@
 // uw9
 // unigrid
 
-Problem/materials {Ball = SolidEntropyBasedStretch_0, Plate = SolidEntropyBasedStretch_0, Void = Vacuum}
+Problem/materials {Ball = $SOLID_0, Plate = $SOLID_0, Void = Vacuum}
 MM {e-3} 
 
 xdom {5.0MM}
@@ -34,16 +34,16 @@ ANGLE  {90}
 ROTFREQ {0} 
 RADIUS {4.76MM/2}
 CENTREX {0.0MM}
-CENTREY {RADIUS}
-BALL {Circle{x=CENTREX, y=CENTREY + GAP, r=RADIUS}}
+CENTREY {RADIUS + GAP}
+BALL {Circle{x=CENTREX, y=CENTREY, r=RADIUS}}
 
 // simulation objects 
 Problem/regions { BALL, PLATE }
 
 // Materials
-Ball/elastic {MGS_HS}
+Ball/elastic {$ELASTIC}
 Ball/plastic { None {}}
-Plate/elastic {MGS_HS}
+Plate/elastic { $ELASTIC }
 Plate/plastic { None {} }
 
 // Initial data
@@ -120,11 +120,17 @@ Output/Checkpoint/interval {5.0e-06}
 Output/Integrate/active {true}
 Output/Integrate/filename {integrateVariables}
 Output/Integrate/interval {2.5e-8}
+/* Output/Integrate/variables { */
+/*   Ball:rho, Ball:rhoE, Ball:rhoU, Ball:rhokinE, Ball:U, Ball:kinE, */ 
+/*   Ball:v,Plate:rho, Plate:rhoE, Plate:rhoU, Plate:rhokinE, Plate:U, Plate:kinE, Plate:v, Ball:energyS, */ 
+/*   Ball:energyH, Plate:energyS, Plate:energyH */
+/* } */ 
+
 Output/Integrate/variables {
   Ball:rho, Ball:rhoE, Ball:rhoU, Ball:rhokinE, Ball:U, Ball:kinE, 
-  Ball:v,Plate:rho, Plate:rhoE, Plate:rhoU, Plate:rhokinE, Plate:U, Plate:kinE, Plate:v, Ball:energyS, 
-  Ball:energyH, Plate:energyS, Plate:energyH
+  Ball:v,Plate:rho, Plate:rhoE, Plate:rhoU, Plate:rhokinE, Plate:U, Plate:kinE, Plate:v
 } 
+
 
 // Output : Settings file
 Output/SettingsFile/active {true} 
@@ -132,7 +138,7 @@ Output/SettingsFile/filename {settings}
 
 // Output : Timeseries
 TIMESERIES {true}
-Output/TimeSeries/instances {2}
+Output/TimeSeries/instances {3}
 
 DELTA {xdom / CELLX}
 
@@ -142,7 +148,7 @@ Output/TimeSeries/variables {Ball:v}
 Output/TimeSeries/interval {2e-8}
 Output/TimeSeries/continuousOutput {false}
 Output/TimeSeries/frequency {0}
-Output/TimeSeries/points { Points { {CENTREX + DELTA , CENTREY}, {CENTREX + DELTA, CENTREY - RADIUS}, {CENTREX + DELTA, STHICK } }}
+Output/TimeSeries/points { Points { {CENTREX + DELTA , CENTREY}, {CENTREX + 2*DELTA, CENTREY}, {CENTREX + DELTA, CENTREY - RADIUS}, {CENTREX + DELTA, YSURFACE} }}
 Output/TimeSeries/filename {velocity-out}
 Output/TimeSeries/fixed {false}
 
@@ -153,7 +159,7 @@ Output/TimeSeries-1/interval {5e-8}
 Output/TimeSeries-1/continuousOutput {false}
 Output/TimeSeries-1/timedependent {true}
 Output/TimeSeries-1/frequency {0}
-Output/TimeSeries-1/points { Points { {CENTREX+DELTA, YSURFACE} } }
+Output/TimeSeries-1/points { Points { {CENTREX+DELTA, YSURFACE - 2*DELTA} } }
 Output/TimeSeries-1/filename {plate_surface_point}
 Output/TimeSeries-1/fixed {false}
 
