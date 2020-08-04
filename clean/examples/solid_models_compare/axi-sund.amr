@@ -101,7 +101,7 @@ LoadBalance/blockSize { 5 }
 
 // Output base options
 VISIT {false}
-Output/directory {/home/ma595/output/axi-clean/test_solid/}
+Output/directory {/home/ma595/output/axi-clean/}
 Output/interval { 1e-05 }
 // Output : Visit 
 Output/VisIt/active {VISIT}
