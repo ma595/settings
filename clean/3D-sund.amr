@@ -1,11 +1,18 @@
 /*
   3D normal impact 
+  TODO:
+    - impact at point 0,0,0
  */
 
 MM {e-3} 
+// this took about 3.0 hours 
+CELLX {100}
+CELLY {50}
+CELLZ {90}
 
 USEHLLD {true}
-OUTPUT { true }
+TIMESERIES {true}
+OUTPUTVISIT { true }
 INTERVAL {2e-6}
 
 //-----------------------------------------------------------------------------------------------------------------
@@ -29,6 +36,7 @@ IBC {stick}
 //-----------------------------------------------------------------------------------------------------------------
 //                                                  GEOMETRY
 //-----------------------------------------------------------------------------------------------------------------
+GAP {0.5e-3}
 RADIUS {4.76MM/2}
 CENTREX {0}
 CENTREY {0}
@@ -38,12 +46,7 @@ ROTFREQ {0}
 /* CELLY {168} */
 /* CELLZ {96} */ 
 
-// this took about 3.0 hours 
-CELLX {100}
-CELLY {50}
-CELLZ {90}
 
-GAP {0.5e-3}
 
 BALL {Sphere{x=0, y=0, z=CENTREZ, r=RADIUS}}
 Amr/cells {CELLX, CELLY, CELLZ} 
@@ -100,13 +103,13 @@ Output/times {0}
 Output/interval {INTERVAL}
 
 Output/VisIt/active { OUTPUTVISIT }
-Output/VisIt/filename {unigrid_AMRLEVEL}
+Output/VisIt/filename {clean_AMRLEVEL}
 Output/VisIt/outputAllVars {true}
 Output/VisIt/outputGhost {true}
 Output/VisIt/compress {false}
 
 Output/Checkpoint/active { false }
-Output/Checkpoint/filename {block_checkpoint}
+Output/Checkpoint/filename {checkpoint}
 Output/Checkpoint/interval {5e-06} //
 Output/Checkpoint/compress {false}
 
@@ -119,7 +122,7 @@ LoadBalance/Zoltan/method {RecursiveCoordBisection}
 LoadBalance/Zoltan/separateLevelWeighting {true}
 LoadBalance/Zoltan/useHierarchy {true}
 LoadBalance/Zoltan/sockets {2}
-LoadBalance/Zoltan/cores {8}
+LoadBalance/Zoltan/cores {16}
 LoadBalance/blockSize { 5 }
 
 // <H2> Other modules </H2>
@@ -142,13 +145,31 @@ Output/Integrate/variables {Ball:rho, Ball:rhoE, Ball:rhoU, Ball:rhokinE, Ball:U
 DX {10.0MM/CELLX}
 /* YCOORD {2.00MM} */
 
-Output/TimeSeries/instances {1}
-Output/TimeSeries/active {true}
+Output/TimeSeries/instances {3}
+Output/TimeSeries/active {TIMESERIES}
 Output/TimeSeries/variables {Ball:v}
 Output/TimeSeries/interval {1e-7}
 Output/TimeSeries/frequency {0}
 Output/TimeSeries/continuousOutput {false}
 Output/TimeSeries/points {{CENTREX, CENTREY, CENTREZ}}
+
+Output/TimeSeries-1/active {TIMESERIES}
+Output/TimeSeries-1/filename {interfaceMonitor-2}
+Output/TimeSeries-1/fixed {false}
+Output/TimeSeries-1/frequency {0}
+Output/TimeSeries-1/interval {5e-8}
+Output/TimeSeries-1/continuousOutput {false}
+Output/TimeSeries-1/variables {Plate:v}
+Output/TimeSeries-1/points {Line{start={-5MM, 2*DELTA, 0}, end={5MM, 2*DELTA, 0}, points=CELLX}}
+
+Output/TimeSeries-2/active {TIMESERIES}
+Output/TimeSeries-2/filename {interfaceMonitor-1}
+Output/TimeSeries-2/fixed {false}
+Output/TimeSeries-2/frequency {0}
+Output/TimeSeries-2/interval {5e-8}
+Output/TimeSeries-2/continuousOutput {false}
+Output/TimeSeries-2/variables {Plate:v}
+Output/TimeSeries-2/points {Line{start={-5MM, DELTA, 0}, end={5MM, DELTA, 0}, points=CELLX}}
 
 /* Output/Ascii/active {false} */
 /* Output/Ascii/variables {Plate:g_elastic, Ball:g_elastic} */
@@ -157,20 +178,19 @@ Output/TimeSeries/points {{CENTREX, CENTREY, CENTREZ}}
 
 System/flagMaterialsMaxLevel {AMRLEVEL, AMRLEVEL, AMRLEVEL} 
 System/boundaryFlagRegion {0.75} //default 0.75 
-GEOM {Box {X1=-1.0MM, X2=1.0MM, Y1=0.5MM, Y2=1.2MM, Z1=0, Z2=0.75MM}} 
+GEOM {Box {X1=-1.0MM, X2=1.0MM, Y1=-0.5MM, Y2=1.2MM, Z1=0, Z2=0.75MM}} 
 System/flagMaterialsRegion {GEOM, GEOM,  GEOM} 
 System/flagMaterials {true, true, true} 
 Output/Slice/instances {2}
 
 Output/Slice-1/active {true}
-/* Output/Slice/directory {~/projects/cyl-3D/output/3D_unigrid_BCs_attempt_SEB_res_CELLX_AMRLEVEL_VELMAG} */
+/* Output/Slice/directory {} */
 Output/Slice-1/filename {slice}
 Output/Slice-1/axisIntercept {z=1e-09}
 Output/Slice-1/interval {1e-06}
 Output/Slice-1/variables {Plate:p}
 
 Output/Slice-2/active {true}
-/* Output/Slice/directory {~/projects/cyl-3D/output/3D_unigrid_BCs_attempt_SEB_res_CELLX_AMRLEVEL_VELMAG} */
 Output/Slice-2/filename {slice}
 Output/Slice-2/axisIntercept {z=1e-09}
 Output/Slice-2/interval {1e-06}
