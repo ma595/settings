@@ -1,0 +1,179 @@
+/*
+  3D normal impact 
+ */
+
+MM {e-3} 
+
+USEHLLD {true}
+OUTPUT { true }
+INTERVAL {2e-6}
+
+//-----------------------------------------------------------------------------------------------------------------
+//                                                  MATERIALS
+//-----------------------------------------------------------------------------------------------------------------
+
+Ball/elastic {MGS_HS}
+Plate/elastic {MGH_Cu}
+Plate/plastic {JC_Cu_REF}
+
+/* Plate/yieldTolerance {1e-3} */
+Plate/maxPlasticIterations {10}
+
+//-----------------------------------------------------------------------------------------------------------------
+//                                          SIMULATION VARIABLES
+//-----------------------------------------------------------------------------------------------------------------
+AMRLEVEL {0}
+D_ANG   {30}
+VELMAG  {30}                
+IBC {stick}
+//-----------------------------------------------------------------------------------------------------------------
+//                                                  GEOMETRY
+//-----------------------------------------------------------------------------------------------------------------
+RADIUS {4.76MM/2}
+CENTREX {0}
+CENTREY {0}
+CENTREZ {RADIUS + GAP}
+ROTFREQ {0}
+/* CELLX {96} */ 
+/* CELLY {168} */
+/* CELLZ {96} */ 
+
+// this took about 3.0 hours 
+CELLX {100}
+CELLY {50}
+CELLZ {90}
+
+GAP {0.5e-3}
+
+BALL {Sphere{x=0, y=0, z=CENTREZ, r=RADIUS}}
+Amr/cells {CELLX, CELLY, CELLZ} 
+
+Problem/materials {Ball = SolidEntropyBasedStretch_1, Plate = SolidEntropyBasedStretch_1, Void = Vacuum}
+Problem/regions {BALL, Box{X1=-10MM, X2=10MM, Y1=-10MM, Y2=10MM, Z1=-5.0MM, Z2=0.0MM}}
+
+/* CoordMapping/Cartesian/domainMinimum { -5MM,-5MM,-3.0MM} */
+CoordMapping/Cartesian/domainMinimum { -5MM, 0.0MM,-3.0MM}
+CoordMapping/Cartesian/domainMaximum { 5MM, 5.0MM,6.0MM}
+CoordMapping/Cartesian/active {true}
+
+
+Amr/boundaryConditions { { reflective{weld}, reflective{weld} }, { reflective{slip}, reflective{weld} }, { reflective{weld}, reflective{weld} } }
+ Amr/CFL { 0.9 }
+Amr/startTime { 0.0 }
+Amr/finalTime { 2.5e-5 }
+
+Amr/maxRefinementLevel { AMRLEVEL }
+Amr/refinementFactors { 2,2,2,2,2 }
+Amr/regridFrequency { 2 }
+Amr/loadBalanceFrequency { 20 }
+Clustering/Rigoutsos/minWidth { 2 }
+Clustering/Rigoutsos/efficiency { 0.9 }
+Amr/bufferWidth { 2 }
+Amr/interpolation {linear}
+
+// <H2> Initial states </H2>
+Plate:InitialData/Uniform/active {true}
+Plate:InitialData/Uniform/state { v_x=0.0,v_y=0,v_z=0}
+Ball:InitialData/UserDefined3D/active {true}
+Ball:InitialData/UserDefined3D/state {v_x=VELMAG*cos(D_ANG/180*M_PI) + ROTFREQ*2*PI*(x-(CENTREX)),v_z=-VELMAG*sin(D_ANG/180*M_PI) + ROTFREQ*2*PI*(z-(CENTREZ)),v_y=0}
+
+MaterialBoundaryCondition/RiemannGhostFluid/useGhostFluidVelocity {false}
+MaterialBoundaryCondition/RiemannGhostFluid/modifyState {outside}
+MaterialBoundaryCondition/RiemannGhostFluid/active {true}
+LevelSetMethod/WENO/active {true}
+LevelSetSolver/singleReinitialisation {false}
+
+Interface/BallPlate {interface=IBC, useHLLD=USEHLLD}
+Interface/BallVacuum {useHLLD=USEHLLD}
+Interface/PlateVacuum {useHLLD=USEHLLD}
+
+MaterialBoundaryCondition/RiemannGhostFluid/active {true}
+
+// <H2> Solvers </H2>
+FluxMethod/MUSCLHancock/active {true}
+FluxMethod/MUSCLHancock/limiter {van-Leer}
+FluxMethod/MUSCLHancock/solver {HLL}
+
+// <H2> Output </H2>
+Output/directory {/home/ma595/phd/output/axi-vs-3D/sund/3D/initial}
+Output/times {0}
+Output/interval {INTERVAL}
+
+Output/VisIt/active { OUTPUTVISIT }
+Output/VisIt/filename {unigrid_AMRLEVEL}
+Output/VisIt/outputAllVars {true}
+Output/VisIt/outputGhost {true}
+Output/VisIt/compress {false}
+
+Output/Checkpoint/active { false }
+Output/Checkpoint/filename {block_checkpoint}
+Output/Checkpoint/interval {5e-06} //
+Output/Checkpoint/compress {false}
+
+Output/SettingsFile/active {true} 
+Output/SettingsFile/filename {settings}
+
+// <H2> Load balancing </H2>
+LoadBalance/Zoltan/active {true}
+LoadBalance/Zoltan/method {RecursiveCoordBisection}
+LoadBalance/Zoltan/separateLevelWeighting {true}
+LoadBalance/Zoltan/useHierarchy {true}
+LoadBalance/Zoltan/sockets {2}
+LoadBalance/Zoltan/cores {8}
+LoadBalance/blockSize { 5 }
+
+// <H2> Other modules </H2>
+Clustering/Rigoutsos/active {false}
+Clustering/Workload/active {true}
+ODEMethod/RK2/active {true}
+System/reinitFreq {1}
+System/vacuumSpecialCase {true}
+LevelSetSolver/singleReinitialisation {false}
+LevelSetMethod/WENO/active {true}
+
+Output/Integrate/active {true}
+Output/Integrate/filename {integrateVariables}
+Output/Integrate/interval {2.5e-8}
+Output/Integrate/variables {Ball:rho, Ball:rhoE, Ball:rhoU, Ball:rhokinE, Ball:U, Ball:kinE, Ball:v, Plate:rho, Plate:rhoE, Plate:rhoU, Plate:rhokinE, Plate:U, Plate:kinE, Plate:v} // we can determine the kinetic energy by subtracting rhoU from rhoE*rho in gnuplot 
+
+/* Output/TimeSeries/filename {interfaceMonitorPlate} */
+/* Output/TimeSeries/fixed {false} */
+
+DX {10.0MM/CELLX}
+/* YCOORD {2.00MM} */
+
+Output/TimeSeries/instances {1}
+Output/TimeSeries/active {true}
+Output/TimeSeries/variables {Ball:v}
+Output/TimeSeries/interval {1e-7}
+Output/TimeSeries/frequency {0}
+Output/TimeSeries/continuousOutput {false}
+Output/TimeSeries/points {{CENTREX, CENTREY, CENTREZ}}
+
+/* Output/Ascii/active {false} */
+/* Output/Ascii/variables {Plate:g_elastic, Ball:g_elastic} */
+/* Output/Ascii/filename {Ascii_data} */
+/* Output/Ascii/directory { PATH/ascii } */
+
+System/flagMaterialsMaxLevel {AMRLEVEL, AMRLEVEL, AMRLEVEL} 
+System/boundaryFlagRegion {0.75} //default 0.75 
+GEOM {Box {X1=-1.0MM, X2=1.0MM, Y1=0.5MM, Y2=1.2MM, Z1=0, Z2=0.75MM}} 
+System/flagMaterialsRegion {GEOM, GEOM,  GEOM} 
+System/flagMaterials {true, true, true} 
+Output/Slice/instances {2}
+
+Output/Slice-1/active {true}
+/* Output/Slice/directory {~/projects/cyl-3D/output/3D_unigrid_BCs_attempt_SEB_res_CELLX_AMRLEVEL_VELMAG} */
+Output/Slice-1/filename {slice}
+Output/Slice-1/axisIntercept {z=1e-09}
+Output/Slice-1/interval {1e-06}
+Output/Slice-1/variables {Plate:p}
+
+Output/Slice-2/active {true}
+/* Output/Slice/directory {~/projects/cyl-3D/output/3D_unigrid_BCs_attempt_SEB_res_CELLX_AMRLEVEL_VELMAG} */
+Output/Slice-2/filename {slice}
+Output/Slice-2/axisIntercept {z=1e-09}
+Output/Slice-2/interval {1e-06}
+Output/Slice-2/variables {Ball:p}
+
+
