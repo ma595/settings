@@ -62,7 +62,7 @@ Perfect_MildSteel {Perfect {yield=4e8}}
 
 // COPPER
 // EOS
-MGS_Cu_Energy {Separable{eos=EntropyBasedWrapper{entropy-eos=MGSimple {rho0=8930, C0=3930,T0=298}},shear=Constant{G=43.33e9}}}
+MGS_Cu_Energy {Separable{eos=EntropyBasedWrapper{entropy-eos=MGSimple {rho0=8930, s=1.49, c0=3930,T0=298}},shear=Constant{G=43.33e9}}}
 MGS_Cu {Separable{eos=MGSimple{rho0=8930, s=1.49, c0=3940, T0=298}, shear=Constant{G=43.33e9}}}
 MGH_Cu {Separable{eos=HugoniotEntropyBased{rho0=8930, s=1.49, c0=3940, Gamma0=2.12, U0=1.1236e5, S0=0, cv=390, T0=298}, shear=Constant{G=43.33e9}}}
 MGH_Cu_zero {Separable{eos=HugoniotEntropyBased{rho0=8930, s=1.49, c0=3940, Gamma0=2.12, U0=0, S0=0, cv=390, T0=298}, shear=Constant{G=43.33e9}}}
