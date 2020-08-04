@@ -1,0 +1,5 @@
+{
+ELASTIC_PLATE = MGS_Cu, MGS_Cu, MGS_Cu_Energy
+ELASTIC_BALL = MGS_HS, MGS_HS, MGS_HS_Energy
+SOLID = SolidEntropyBased, SolidEntropyBasedStretch, Solid 
+}
