@@ -22,7 +22,7 @@ FTIME {2.5e-5}
 //-----------------------------------------------------------------------------------------------------------------
 
 Ball/elastic {MGS_HS}
-Plate/elastic {MGH_Cu}
+Plate/elastic {MGS_Cu}
 Plate/plastic {JC_Cu_REF}
 
 /* Plate/yieldTolerance {1e-3} */
