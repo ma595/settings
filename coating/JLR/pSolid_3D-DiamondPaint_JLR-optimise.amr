@@ -1,0 +1,195 @@
+// Title: Steel ball impacting a steel plate.
+// Section: CaseStudies
+/* A ball of steel impacts a plate of steel at 610m/s at an angle of 60 degrees.
+   This is the test-case found in Kapahi et al, "A three-dimensional sharp interface Cartesian grid method
+   for solving high speed multi-material impact, penetration and fragmentation problems."
+   \doi{10.1016/j.jcp.2013.01.007}
+
+   We assume SI units throughout.
+*/
+
+// <H2> Material definitions </H2>
+
+/* We use the energy-based Solid material, with different materials for the ball and plate.
+   This is surrounded by a vacuum, to save computational expense.
+*/
+
+//JLR Case study September 2015, modified March 2016
+//parameterise over 
+
+LEVEL {2}
+CELLX {80}
+CELLY {150}
+CELLZ {120}
+
+/* CELLX {40} */
+/* CELLY {125} */
+/* CELLZ {60} */
+
+/* CELLX {80} */
+/* CELLY {250} */
+/* CELLZ {120} */
+
+Problem/materials {Block = SolidEntropyBased_0, Plate = SolidEntropyBased_1, Paint = SolidEntropyBased_1, Void = Vacuum}
+
+// We use a simple MieGruneisen EoS for the steel, with Johnson-Cook plasticity, with parameters from Kapahi above.
+MieGruneisen_MildSteel {Separable{eos=MGSimple{rho0=7870, s=1.49, c0=4569, T0=298}, shear=Constant{G=81.8e9}}}
+JohnsonCook_MildSteel {JohnsonCook{A=0.53e9, B=0.229e9, C=0.027, n=0.302, m=1.0, epsdot0=1.0, T0=298, Tm=1836}}
+PMMAElastic {Separable {eos=MGSimple {rho0=1180, c0=2260, T0=300, s = 1.82}, shear=Constant {G=1148e6}}}
+
+Perfect_Steel {Perfect {yield=1.37e9}}
+
+Block/elastic {MieGruneisen_MildSteel}
+
+Plate/elastic {MieGruneisen_MildSteel}
+Plate/plastic {Perfect_Steel}
+
+Paint/elastic {PMMAElastic}
+Paint/plastic {Perfect {yield=72e6}}
+
+//Paint/plastic {AluPlastic}
+
+// All materials slip w.r.t each other.
+Interface/BlockPlate {interface=slip}
+Interface/PaintPlate {interface=$BC2}
+Interface/BlockPaint {interface=slip}
+
+MaterialBoundaryCondition/RiemannGhostFluid/active {true}
+MaterialBoundaryCondition/RiemannGhostFluid/useGhostFluidVelocity {false}
+
+// <H2> Domain definition </H2>
+
+MM {e-3} // Helpful macro to make reading easier.
+//RADIUS {6.35MM/2} // Diameter 6.35mm for a ball
+RADIUS {6.35MM/2/sqrt(2)} // Diameter for a block
+CENTREY {6.0MM}
+CENTREZ {3.5MM + RADIUS + 1.5MM - 0.3MM}
+ROTFREQ {0} // Rotational frequency of the block
+
+//PARTICLE {Sphere{x=0MM, y=8MM, z=11.5MM + RADIUS + 0.5MM, r=RADIUS}}
+PARTICLE {Rotate{Box{X1=0MM-RADIUS, X2=0MM+RADIUS, Y1=CENTREY-RADIUS, Y2=CENTREY+RADIUS, Z1=CENTREZ-RADIUS, Z2=CENTREZ+RADIUS}, theta=PI/4, axis={1,0,0}, origin={0MM,CENTREY,CENTREZ}} }
+
+Problem/regions {PARTICLE,
+		Box{X1=-5MM, X2=30MM, Y1=-5MM, Y2=45MM, Z1=1.5MM, Z2=3.0MM},
+		Box{X1=-5MM, X2=30MM, Y1=-5MM, Y2=45MM, Z1=3.0MM, Z2=3.5MM}}
+
+/*
+// Full domain
+CoordMapping/Cartesian/domainMinimum {0MM,0MM,5MM}
+CoordMapping/Cartesian/domainMaximum {16MM, 40MM, 20MM}
+CoordMapping/Cartesian/active {true}
+//Amr/cells {80, 200, 75} // We use cells 0.2mm across, as compared to Kapahi's 0.1mm
+
+Amr/cells {80, 200, 75} // We use cells 0.2mm across, as compared to Kapahi's 0.1mm
+*/
+
+
+// Cut-down domain for testing:
+CoordMapping/Cartesian/domainMinimum {0MM,0MM,0MM}
+CoordMapping/Cartesian/domainMaximum {8MM, 15MM, 12MM}
+CoordMapping/Cartesian/active {true}
+
+Amr/cells {CELLX, CELLY, CELLZ} 
+
+/* Reflective boundaries all around the plate, and transmissive boundaries
+   at the top and bottom of the domain.
+*/
+Amr/boundaryConditions { { reflective{reflect}, reflective{stationary} },
+			{ reflective{stationary}, reflective{stationary} },
+			{ transmissive, transmissive }
+			}
+
+
+cfl { 0.6}
+Amr/CFL { cfl }
+
+Amr/startTime { 0.0 }
+Amr/finalTime { 1.25e-4 }
+
+Amr/maxRefinementLevel { LEVEL }
+Amr/refinementFactors { 2,2,2,2,2 }
+Amr/regridFrequency { 2 }
+Amr/loadBalanceFrequency { 20 }
+Clustering/Rigoutsos/minWidth { 2 }
+Clustering/Rigoutsos/efficiency { 0.9 }
+Amr/bufferWidth { 2 }
+Amr/interpolation {linear}
+
+// <H2> Initial states </H2>
+
+// Plate is stationary.
+Plate:InitialData/Uniform/active {true}
+Plate:InitialData/Uniform/state { v_x=0.0,v_y=0,v_z=0}
+Paint:InitialData/Uniform/active {true}
+Paint:InitialData/Uniform/state { v_x=0.0,v_y=0,v_z=0}
+
+// Block moves at 60m/s at an angle of 30 degrees to the horizontal.
+velMag {$VELMAG}
+iangle {$IANG}
+Block:InitialData/UserDefined3D/active {true}
+Block:InitialData/UserDefined3D/state { v_y=velMag*cos(iangle/180*M_PI) + ROTFREQ*2*PI*(y-(CENTREY)),v_x=0,v_z=-velMag*sin(iangle/180*M_PI) + ROTFREQ*2*PI*(z-(CENTREZ))}
+
+FluxMethod/MUSCLHancock/active {true}
+FluxMethod/MUSCLHancock/limiter {van-Leer}
+FluxMethod/MUSCLHancock/solver {HLL}
+
+Output/directory {/home/ma595/output/coating/3D/JLR/parameter/}
+Output/times {0}
+Output/interval {2.5e-5}
+
+Output/VisIt/active { true }
+Output/VisIt/filename {block_paint}
+Output/VisIt/outputAllVars {false}
+Output/VisIt/outputGhost {true}
+
+Output/Checkpoint/active {true}
+Output/Checkpoint/filename {ball_checkpoint}
+Output/Checkpoint/interval {2.5e-5}
+
+// <H2> Load balancing </H2>
+
+// We use sensible defaults for load-balancing across multiple processors.
+
+LoadBalance/Zoltan/active {true}
+LoadBalance/Zoltan/method {RecursiveCoordBisection}
+LoadBalance/Zoltan/separateLevelWeighting {true}
+LoadBalance/Zoltan/useHierarchy {false}
+/* LoadBalance/Zoltan/sockets {SOCKETS} */
+/* LoadBalance/Zoltan/cores {CORES} */
+LoadBalance/blockSize { 5 }
+
+// <H2> Other modules </H2>
+
+// The following should not need changing.
+
+Clustering/Rigoutsos/active {false}
+Clustering/Workload/active {true}
+
+ODEMethod/RK2/active {true}
+
+System/reinitFreq {1}
+LevelSetMethod/WENO/active {true}
+
+/* Output/Integrate/active {true} */
+/* Output/Integrate/filename {integrateVariables} */
+/* Output/Integrate/variables {Block:rho, Block:rhoE, Block:rhoU, Block:rhokinE, Block:U, Block:kinE, Block:v,Plate:rho, Plate:rhoE, Plate:rhoU, Plate:rhokinE, Plate:U, Plate:kinE, Plate:v, Paint:rho, Paint:rhoE, Paint:rhoU, Paint:rhokinE, Paint:U, Paint:kinE, Paint:v, Paint:T} // we can determine the kinetic energy by subtracting rhoU from rhoE*rho in gnuplot */ 
+/* Output/Integrate/interval {1.e-06} */
+
+/* Paint:Flagging/AllMaterial/active {true} */
+/* Paint:Flagging/AllMaterial/maxRefinementLevel {1} */
+/* Block:Flagging/Gradient/active {true} */
+/* Block:Flagging/Gradient/variables { Block:rho = 1000 } */ 
+/* Block:Flagging/Gradient/region { Box {X1 = 0.00, X2 = 0.002, Y1=0.005, Y2 = 0.015, Z1 = 0.0115, Z2 = 0.013}} */ 
+
+/* Plate:Flagging/Gradient/active {true} */
+/* Plate:Flagging/Gradient/variables { Plate:rho = 1000 } */ 
+/* Plate:Flagging/Gradient/region { Box {X1 = 0.00, X2 = 0.002, Y1=0.005, Y2 = 0.015, Z1 = 0.0115, Z2 = 0.013}} */ 
+
+BOX {Box {X1 = 0.00, X2 = RADIUS, Y1=5.0MM, Y2 = 12.0MM, Z1 = 3.0MM, Z2 = 4.5MM}}
+System/flagMaterials {true, true, true, true}
+System/flagMaterialsMaxLevel {LEVEL,LEVEL,LEVEL,LEVEL}
+System/boundaryFlagRegion {0.5} 
+System/flagMaterialsRegion {BOX,BOX,BOX,BOX}
+
+
+

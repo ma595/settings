@@ -1,5 +1,8 @@
 /*
   3D normal impact 
+  simplest examination of angular impact 
+  - stick interface
+  - 
   TODO:
     - impact at point 0,0,0
 
@@ -32,8 +35,8 @@ Plate/maxPlasticIterations {10}
 //                                          SIMULATION VARIABLES
 //-----------------------------------------------------------------------------------------------------------------
 AMRLEVEL {0}
-D_ANG   {$D_ANG}
-VELMAG  {$VEL}                
+D_ANG   {45}
+VELMAG  {50}                
 IBC {stick}
 //-----------------------------------------------------------------------------------------------------------------
 //                                                  GEOMETRY
@@ -53,7 +56,7 @@ ROTFREQ {0}
 BALL {Sphere{x=0, y=0, z=CENTREZ, r=RADIUS}}
 Amr/cells {CELLX, CELLY, CELLZ} 
 
-Problem/materials {Ball = SolidEntropyBasedStretch_1, Plate = SolidEntropyBasedStretch_1, Void = Vacuum}
+Problem/materials {Ball = SolidEntropyBasedStretch_0, Plate = SolidEntropyBasedStretch_1, Void = Vacuum}
 Problem/regions {BALL, Box{X1=-10MM, X2=10MM, Y1=-10MM, Y2=10MM, Z1=-5.0MM, Z2=0.0MM}}
 
 /* CoordMapping/Cartesian/domainMinimum { -5MM,-5MM,-3.0MM} */
@@ -109,7 +112,7 @@ Output/VisIt/filename {clean_AMRLEVEL}
 Output/VisIt/outputAllVars {false}
 Output/VisIt/outputGhost {true}
 Output/VisIt/compress {false}
-Output/VisIt/interval { TIME}
+Output/VisIt/interval { INTERVAL }
 
 Output/Checkpoint/active { false }
 Output/Checkpoint/filename {checkpoint}
@@ -145,25 +148,17 @@ Output/Integrate/variables {Ball:rho, Ball:rhoE, Ball:rhoU, Ball:rhokinE, Ball:U
 /* Output/TimeSeries/filename {interfaceMonitorPlate} */
 /* Output/TimeSeries/fixed {false} */
 
-DX {10.0MM/CELLX}
+DELTA {10.0MM/CELLX}
 /* YCOORD {2.00MM} */
 
 Output/TimeSeries/instances {3}
-Output/TimeSeries/active {TIMESERIES}
-Output/TimeSeries/variables {Ball:v}
-Output/TimeSeries/interval {1e-7}
-Output/TimeSeries/frequency {0}
-Output/TimeSeries/continuousOutput {false}
-Output/TimeSeries/points {{CENTREX, CENTREY+DELTA, CENTREZ}, {CENTREX, CENTREY+2*DELTA, CENTREZ}}
-
 Output/TimeSeries-1/active {TIMESERIES}
-Output/TimeSeries-1/filename {interfaceMonitor-2}
-Output/TimeSeries-1/fixed {false}
+Output/TimeSeries-1/variables {Ball:v}
+Output/TimeSeries-1/interval {1e-7}
 Output/TimeSeries-1/frequency {0}
-Output/TimeSeries-1/interval {5e-8}
+Output/TimeSeries-1/filename {Ball-monitor}
 Output/TimeSeries-1/continuousOutput {false}
-Output/TimeSeries-1/variables {Plate:v, Plate:sigma}
-Output/TimeSeries-1/points {Line{start={-5MM, 2*DELTA, 0}, end={5MM, 2*DELTA, 0}, points=CELLX}}
+Output/TimeSeries-1/points {Points {{CENTREX, CENTREY+DELTA, CENTREZ}, {CENTREX, CENTREY+2*DELTA, CENTREZ}}}
 
 Output/TimeSeries-2/active {TIMESERIES}
 Output/TimeSeries-2/filename {interfaceMonitor-1}
@@ -173,6 +168,15 @@ Output/TimeSeries-2/interval {5e-8}
 Output/TimeSeries-2/continuousOutput {false}
 Output/TimeSeries-2/variables {Plate:v, Plate:sigma}
 Output/TimeSeries-2/points {Line{start={-5MM, DELTA, 0}, end={5MM, DELTA, 0}, points=CELLX}}
+
+Output/TimeSeries-3/active {TIMESERIES}
+Output/TimeSeries-3/filename {interfaceMonitor-2}
+Output/TimeSeries-3/fixed {false}
+Output/TimeSeries-3/frequency {0}
+Output/TimeSeries-3/interval {5e-8}
+Output/TimeSeries-3/continuousOutput {false}
+Output/TimeSeries-3/variables {Plate:v, Plate:sigma}
+Output/TimeSeries-3/points {Line{start={-5MM, 2*DELTA, 0}, end={5MM, 2*DELTA, 0}, points=CELLX}}
 
 /* Output/Ascii/active {false} */
 /* Output/Ascii/variables {Plate:g_elastic, Ball:g_elastic} */
