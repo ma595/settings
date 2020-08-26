@@ -1,0 +1,152 @@
+
+// Title: Steel ball impacting a steel plate.
+// Section: CaseStudies
+/* A block of steel impacts a painted substrate at 60ms-1 at an angle of 30 degrees.
+*/
+DATA {true}
+Problem/materials {Projectile = SolidEntropyBased_1, Plate = SolidEntropyBased_1, Paint = SolidEntropyBased_1, Void = Vacuum}
+MAX {2}
+CELLX {120}
+CELLY {80}
+
+// We use a simple MieGruneisen EoS for the steel, with Johnson-Cook plasticity, with parameters from Kapahi above.
+MieGruneisen_HardSteel {Separable{eos=MGSimple{rho0=7850, s=1.49, c0=4570, T0=298}, shear=Constant{G=77.3e9}}}
+MieGruneisen_MildSteel {Separable{eos=MGSimple{rho0=7870, s=1.49, c0=4569, T0=298}, shear=Constant{G=81.8e9}}}
+JohnsonCook_MildSteel {JohnsonCook{A=0.53e9, B=0.229e9, C=0.027, n=0.302, m=1.0, epsdot0=1.0, T0=298, Tm=1836}} 
+AluElastic {Separable {eos=Romenskii {rho0=2710, cv=900, T0=300, alpha=1, gamma=2.088, b0=3160, c0=6220}, shear=Romenskii {beta=3.577, b0=3160}}}
+AluPlastic {Perfect {yield=0.4e9} }
+PMMAElastic {Separable {eos=MGSimple {rho0=1180, c0=2260, T0=300, s = 1.82}, shear=Constant {G=1.148e9}}}
+
+Projectile/elastic {MieGruneisen_MildSteel}
+Plate/elastic {MieGruneisen_MildSteel}
+Plate/plastic {JohnsonCook_MildSteel}
+Paint/elastic {PMMAElastic}
+Paint/plastic {Perfect {yield=72e6}}
+
+/* Impacter/quickTimeStep {6500} */ 
+/* Plate/quickTimeStep {6500} */
+/* Paint/quickTimeStep {6500} */
+
+Interface/ProjectilePlate {interface=slip}
+Interface/PaintPlate {interface=stick}
+Interface/ProjectilePaint {interface=slip}
+
+UGFV {false}
+
+MaterialBoundaryCondition/modifyState {MODIFY}
+MaterialBoundaryCondition/RiemannGhostFluid/active {true}
+MaterialBoundaryCondition/RiemannGhostFluid/useGhostFluidVelocity {UGFV}
+
+MM {e-3} // Helpful macro to make reading easier.
+
+PLANE_ANG {-30}
+TRI_ANG {65}
+RADIUS { 3.15MM/2 } 
+TRI_HEIGHT { RADIUS/tan(TRI_ANG/180*M_PI)} // derive this from radius
+RECT_HEIGHT { 5MM - TRI_HEIGHT } 
+GAP {0.20MM}
+
+CENTREX {-1.0MM}
+CENTREY {1.0MM + GAP}
+CENTREYP {1.0MM + 2.55MM + GAP}
+//start with right point and proceed clockwis
+TRIANGLE { Triangle { {CENTREX+RADIUS, CENTREY}, {CENTREX, CENTREY-TRI_HEIGHT}, {CENTREX-RADIUS, CENTREY}}} 
+RECTANGLE {Rectangle{X1=CENTREX-RADIUS, X2=CENTREX+RADIUS, Y1=CENTREY, Y2=CENTREY+5MM-TRI_HEIGHT}} 
+LPARTICLE {Rotate{Union{TRIANGLE, RECTANGLE}, theta=PLANE_ANG/180*M_PI, axis={0,0,1}, origin={CENTREX+RADIUS,CENTREY}}}
+PARTICLE {Rotate{Rectangle{X1=CENTREX-RADIUS, X2=CENTREX+RADIUS, Y1=CENTREYP-RADIUS, Y2=CENTREYP+RADIUS}, theta=PI/4, axis={0,0,1}, origin={CENTREX,CENTREYP}} }
+
+Problem/regions {PARTICLE,
+		 Rectangle {X1=-15MM, X2=15MM, Y1=0.0MM, Y2=1.0MM},
+		 Rectangle {X1=-15MM, X2=15MM, Y1=1.0MM, Y2=1.5MM}}
+
+CoordMapping/Cartesian/domainMinimum {-6.0MM, 0.0MM}
+CoordMapping/Cartesian/domainMaximum { 6.0MM, 8.0MM}
+CoordMapping/Cartesian/active {true}
+
+Amr/cells {CELLX, CELLY}
+Amr/boundaryConditions { { reflective{stationary}, reflective{stationary} },
+			 { reflective{reflect}, transmissive } }
+
+Amr/CFL { 0.45 }
+
+Amr/startTime { 0.0 }
+Amr/finalTime { 2.5e-4 } 
+
+Amr/maxRefinementLevel { MAX }
+Amr/refinementFactors { 2,2,2,2,2 }
+Amr/regridFrequency { 2 }
+Amr/loadBalanceFrequency { 20 }
+Clustering/Rigoutsos/minWidth { 2 }
+Clustering/Rigoutsos/efficiency { 0.9 }
+Amr/bufferWidth { 2 }
+Amr/interpolation {linear}
+
+Plate:InitialData/Uniform/active {true}
+Plate:InitialData/Uniform/state { v_x=0.0,v_y=0}
+Paint:InitialData/Uniform/active {true}
+Paint:InitialData/Uniform/state { v_x=0.0,v_y=0}
+
+VELMAG {70}
+ANGLE {30}
+ROTFREQ {0}
+
+Projectile:InitialData/UserDefined2D/active {true}
+Projectile:InitialData/UserDefined2D/state { v_x=VELMAG*cos(ANGLE/180*M_PI) + ROTFREQ*2*PI*(y-(CENTREY)),v_y=-VELMAG*sin(ANGLE/180*M_PI) + ROTFREQ*2*PI*(y-(CENTREY))}
+
+FluxMethod/MUSCLHancock/active {true}
+FluxMethod/MUSCLHancock/limiter {van-Leer}
+FluxMethod/MUSCLHancock/solver {HLL}
+
+Output/directory {/rds/user/ma595/rds-hpc-support/ma595/phd/output/coating/JLR/2D/}
+Output/times {0}
+/* Output/frequency {1} */
+Output/interval {1e-6}
+Output/VisIt/active { DATA }
+Output/VisIt/filename {2D-CORES}
+Output/VisIt/outputAllVars {true}
+Output/VisIt/outputGhost {true}
+
+Output/Checkpoint/active { DATA }
+Output/Checkpoint/filename {ball_checkpoint}
+Output/Checkpoint/interval {5e-6}
+
+LoadBalance/Zoltan/active {true}
+LoadBalance/Zoltan/method {RecursiveCoordBisection}
+LoadBalance/Zoltan/separateLevelWeighting {true}
+LoadBalance/Zoltan/useHierarchy {false}
+/* LoadBalance/Zoltan/sockets {2} */
+/* LoadBalance/Zoltan/cores {8} */
+LoadBalance/blockSize {5}
+
+Clustering/Rigoutsos/active {false}
+Clustering/Workload/active {true}
+ODEMethod/RK2/active {true}
+System/reinitFreq {1}
+LevelSetMethod/WENO/active {true}
+
+// MA
+// Integrate modules 
+/* Output/Integrate/active {true} */
+/* Output/Integrate/filename {integrateVariables} */
+/* Output/Integrate/variables {Impacter:rho, Impacter:rhoE, Impacter:rhoU, Impacter:rhokinE, Impacter:U, Impacter:kinE, Impacter:v,Plate:rho, Plate:rhoE, Plate:rhoU, Plate:rhokinE, Plate:U, Plate:kinE, Plate:v, Paint:rho, Paint:rhoE, Paint:rhoU, Paint:rhokinE, Paint:U, Paint:kinE, Paint:v, Paint:T} // we can determine the kinetic energy by subtracting rhoU from rhoE*rho in gnuplot */ 
+/* Output/Integrate/interval {1.e-06} */
+
+//refines the whole paint layer (unnecessary)
+/* Paint:Flagging/AllMaterial/active {true} */
+/* Paint:Flagging/AllMaterial/maxRefinementLevel {2} */
+//this creates a box around the impact area and we choose to refine this area based on density gradients
+/* Impacter:Flagging/Gradient/active {true} */
+/* Impacter:Flagging/Gradient/variables { Impacter:rho = 1000 } */ 
+/* Impacter:Flagging/Gradient/region { Box {X1 = 0.00, X2 = 0.002, Y1=0.005, Y2 = 0.015, Z1 = 0.0115, Z2 = 0.013}} */ 
+
+/* Plate:Flagging/Gradient/active {true} */
+/* Plate:Flagging/Gradient/variables { Plate:rho = 1000 } */ 
+/* Plate:Flagging/Gradient/region { Box {X1 = 0.00, X2 = 0.002, Y1=0.005, Y2 = 0.015, Z1 = 0.0115, Z2 = 0.013}} */ 
+//this creates a box around the impact area -- all refined
+
+/* System/flagMaterialsMaxLevel {MAX,MAX,MAX,MAX} //ball, plate, paint, vacuum */
+/* System/boundaryFlagRegion {0.75} //default 0.75 */
+/* GEOM {Rectangle {X1=-2.0MM, X2=2.0MM, Y1=0.5MM, Y2=2.0MM}} */
+/* System/flagMaterialsRegion {GEOM, GEOM, GEOM, GEOM} */
+/* System/flagMaterials {true, true, true, true} */
+//can this be done with fixed mesh?
