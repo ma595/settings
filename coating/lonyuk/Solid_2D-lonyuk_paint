@@ -1,0 +1,229 @@
+OUTPUTSTRING {DEBUGAPOLLO_Energy_LonyukTest_AMR_IBC_CELLY_MAX}
+VELMAG {60}
+DATA {true}
+Problem/materials {Impacter = Solid_1, Plate = Solid_1, Paint = Solid_1, Void = Vacuum}
+MAX {0}
+PTHICK {0.15MM}
+CELLX {1280}
+CELLY {1120}
+/* CELLX {640} */
+/* CELLY {560} */
+/* CELLX {320} */
+/* CELLY {280} */
+IBC {slip}
+
+// We use a simple MieGruneisen EoS for the steel, with Johnson-Cook plasticity, with parameters from Kapahi above.
+MieGruneisen_HardSteel {Separable{eos=EntropyBasedWrapper{entropy-eos=MGSimple{rho0=7850, s=1.49, c0=4570, T0=298}}, 
+  shear=Constant{G=77.3e9}}}
+MieGruneisen_MildSteel {Separable{eos=EntropyBasedWrapper{entropy-eos=MGSimple{rho0=7870, s=1.49, c0=4569, T0=298}},
+  shear=Constant{G=81.8e9}}}
+JohnsonCook_MildSteel {JohnsonCook{A=0.53e9, B=0.229e9, C=0.027, n=0.302, m=1.0, epsdot0=1.0, T0=298, Tm=1836}}
+
+AluElastic {Separable {eos=Romenskii {rho0=2710, cv=900, T0=300, alpha=1, gamma=2.088, b0=3160, c0=6220}, 
+		       shear=Romenskii {beta=3.577, b0=3160}}}
+AluPlastic {Perfect {yield=0.4e9} }
+
+// Use PMMA for the "paint"
+/* PMMAElastic {Separable {eos=EntropyBasedWrapper{entropy-eos=MGSimple {rho0=1180, c0=2260, T0=300, s = 1.82}}, */ 
+/* 	    	              shear=Constant {G=1148e6}}} */
+PMMAElastic {Separable {eos=EntropyBasedWrapper{entropy-eos=MGSimple {rho0=1180, c0=2260, T0=300, s = 1.82}}, 
+  shear=Constant {G=1.148e9}}}
+
+Impacter/elastic {MieGruneisen_HardSteel}
+/* Impacter/plastic {JohnsonCook_MildSteel} */
+Plate/elastic {MieGruneisen_HardSteel}
+Plate/plastic {JohnsonCook_MildSteel}
+Paint/elastic {PMMAElastic}
+/* Paint/elastic {MieGruneisen_HardSteel} */
+
+//Paint/plastic {AluPlastic}
+/* Impacter/quickTimeStep {6500} */ 
+/* Plate/quickTimeStep {6500} */
+/* Paint/quickTimeStep {6500} */
+
+// All materials slip w.r.t each other.
+Interface/ImpacterPlate {interface=slip}
+Interface/PaintPlate {interface=IBC}
+Interface/ImpacterPaint {interface=slip}
+
+MaterialBoundaryCondition/RiemannGhostFluid/active {true}
+
+// <H2> Domain definition </H2>
+
+MM {e-3} // Helpful macro to make reading easier.
+/* PARTICLE {Rotate{Box{X1=0MM-RADIUS, X2=0MM+RADIUS, Y1=CENTREY-RADIUS, Y2=CENTREY+RADIUS, Z1=CENTREZ-RADIUS, Z2=CENTREZ+RADIUS}, theta=PI/4, axis={1,0,0}, origin={0MM,CENTREY,CENTREZ}} } */
+
+PLANE_ANG {-45}
+TRI_ANG {65}
+RADIUS { 3.15MM/2 } 
+TRI_HEIGHT { RADIUS/tan(TRI_ANG/180*M_PI)} // derive this from radius
+RECT_HEIGHT { 5MM - TRI_HEIGHT } 
+GAP {0.15MM}
+
+CENTREX {1.0MM}
+CENTREY {1.0MM + PTHICK + GAP}
+//start with right point and proceed clockwis
+TRIANGLE { Triangle { {CENTREX+RADIUS, CENTREY}, {CENTREX, CENTREY-TRI_HEIGHT}, {CENTREX-RADIUS, CENTREY}}}
+
+RECTANGLE {Rectangle{X1=CENTREX-RADIUS, X2=CENTREX+RADIUS, Y1=CENTREY, Y2=CENTREY+5MM-TRI_HEIGHT}}
+
+PARTICLE {Rotate{Union{TRIANGLE, RECTANGLE}, theta=PLANE_ANG/180*M_PI, axis={0,0,1}, origin={CENTREX+RADIUS,CENTREY}}}
+
+/* PARTICLE {Rotate{Union{Cone{n={0,0,-1}, c={0,CENTREY,CENTREZ}, r=RADIUS, h=CONEHEIGHT}, Cylinder{n={0,0,1}, c={0,CENTREY,CENTREZ}, r=1.575MM, h=CYLHEIGHT}}, theta=PLANEANG/180*M_PI, axis={1,0,0}, origin={0MM,CENTREY-RADIUS,CENTREZ}} } */
+  /* {Cylinder{n={0,0,1}, c={0,0,0}, r=3.2e-3, h=32.4e-3}} */
+ /* origin={0MM,CENTREY,CENTREZ-CONEHEIGHT} */
+Problem/regions {PARTICLE,
+		Rectangle {X1=-15MM, X2=15MM, Y1=-5.0MM, Y2=1.0MM},
+		Rectangle {X1=-15MM, X2=15MM, Y1=1.0MM, Y2=1.0MM + PTHICK}}
+
+// We assume a plane of symmetry at z=0.
+
+/*
+// Full domain
+CoordMapping/Cartesian/domainMinimum {0MM,0MM,5MM}
+CoordMapping/Cartesian/domainMaximum {16MM, 40MM, 20MM}
+CoordMapping/Cartesian/active {true}
+//Amr/cells {80, 200, 75} // We use cells 0.2mm across, as compared to Kapahi's 0.1mm
+Amr/cells {80, 200, 75} // We use cells 0.2mm across, as compared to Kapahi's 0.1mm
+*/
+
+
+// Cut-down domain for testing:
+CoordMapping/Cartesian/domainMinimum {-2.0MM, 0.0MM}
+CoordMapping/Cartesian/domainMaximum { 6.0MM, 7.0MM}
+CoordMapping/Cartesian/active {true}
+/* Amr/cells {120, 70} // We use cells 0.2mm across, as compared to Kapahi's 0.1mm */
+
+Amr/cells {CELLX, CELLY} // We use cells 0.2mm across, as compared to Kapahi's 0.1mm
+/* Amr/cells {80, 250, 120} // We use cells 0.1mm across */
+
+/* Reflective boundaries all around the plate, and transmissive boundaries
+   at the top and bottom of the domain.
+*/
+Amr/boundaryConditions { { reflective{reflect}, reflective{reflect} },
+			{ reflective{reflect}, transmissive } }
+
+// The energy-based material currently requires CFL < 0.5.
+Amr/CFL { 0.45 }
+
+// Start and finish times for the simulation.
+Amr/startTime { 0.0 }
+Amr/finalTime { 2.5e-5 } 
+/* We do not use AMR for this simulation.
+   Most of the domain is void, so would not benefit from AMR in any case,
+   and the metals would end up being refined to the fullest level
+   everywhere anyway since they are fairly thin.
+*/
+Amr/maxRefinementLevel { MAX }
+Amr/refinementFactors { 2,2,2,2,2 }
+Amr/regridFrequency { 2 }
+Amr/loadBalanceFrequency { 20 }
+Clustering/Rigoutsos/minWidth { 2 }
+Clustering/Rigoutsos/efficiency { 0.9 }
+Amr/bufferWidth { 2 }
+Amr/interpolation {linear}
+
+// <H2> Initial states </H2>
+
+// Plate is stationary.
+Plate:InitialData/Uniform/active {true}
+Plate:InitialData/Uniform/state { v_x=0.0,v_y=0}
+Paint:InitialData/Uniform/active {true}
+Paint:InitialData/Uniform/state { v_x=0.0,v_y=0}
+
+// Impacter moves at 60m/s at an angle of 30 degrees to the horizontal.
+ANGLE {30}
+ROTFREQ {0} // Rotational frequency of the block
+Impacter:InitialData/UserDefined2D/active {true}
+Impacter:InitialData/UserDefined2D/state { v_x=-VELMAG*cos(ANGLE/180*M_PI) + ROTFREQ*2*PI*(x-(CENTREX)),v_y=-VELMAG*sin(ANGLE/180*M_PI) + ROTFREQ*2*PI*(y-(CENTREY))}
+
+// <H2> Solvers </H2>
+// The Solid material requires the following solver.
+FluxMethod/SLIC/active {true}
+FluxMethod/SLIC/limiter {van-Leer}
+FluxMethod/SLIC/limitingVars {rho = rho, v_x = rho, v_y = rho, v_z = rho,
+				     g_xx = rho, g_xy = rho, g_xz = rho, g_yx = rho, g_yy = rho,
+				     g_yz = rho, g_zx = rho, g_zy = rho, g_zz = rho,
+				     Fp_xx = rho, Fp_xy = rho, Fp_xz = rho, Fp_yx = rho, Fp_yy = rho, Fp_yz = rho,
+				     Fp_zx = rho, Fp_zy = rho, Fp_zz = rho, U = rho,
+				     sigma_xx = rho, sigma_xy = rho, sigma_xz = rho,
+				     sigma_yy = rho, sigma_yz = rho, sigma_zz = rho, param_1=rho}
+
+// <H2> Output </H2>
+/* We output every $2\mu\mathrm{s}$ into the following directory.
+*/
+
+/* Output/directory {/local/data/public/ma595/output/ImpacterImpact_lowLong/} */
+Output/directory {/local/data/public/ma595/output/Impact/2D/OUTPUTSTRING/}
+Output/times {0}
+/* Output/frequency {1} */
+Output/interval {1e-6}
+
+/* We only care about the velocity of the ball/plate for this simulation,
+   rather than its strain etc. so we only output conserved variables,
+   hence outputAllVars = false.
+   
+   We therefore get the ball/plate momentum, from which we can recover
+   its velocity to plot as a comparison to the original reference.
+
+   Further, we output data in ghost-cells as we want to plot
+   data on the materials' surfaces. Otherwise, some of the part-cells around
+   their surfaces will not have data output for them,
+   and the plots will appear odd.
+*/
+Output/VisIt/active { DATA }
+Output/VisIt/filename {OUTPUTSTRING}
+Output/VisIt/outputAllVars {true}
+Output/VisIt/outputGhost {false}
+/* Output/VisIt/frequency {1} */
+
+Output/Checkpoint/active { DATA }
+Output/Checkpoint/filename {ball_checkpoint}
+Output/Checkpoint/interval {0.5e-6}
+
+// <H2> Load balancing </H2>
+
+// We use sensible defaults for load-balancing across multiple processors.
+
+LoadBalance/Zoltan/active {true}
+LoadBalance/Zoltan/method {RecursiveCoordBisection}
+LoadBalance/Zoltan/separateLevelWeighting {true}
+LoadBalance/Zoltan/useHierarchy {true}
+LoadBalance/Zoltan/sockets {2}
+LoadBalance/Zoltan/cores {8}
+LoadBalance/blockSize { 5 }
+
+// <H2> Other modules </H2>
+// The following should not need changing.
+Clustering/Rigoutsos/active {false}
+Clustering/Workload/active {true}
+ODEMethod/RK2/active {true}
+System/reinitFreq {1}
+LevelSetMethod/WENO/active {true}
+
+// MA
+// Integrate modules 
+/* Output/Integrate/active {true} */
+/* Output/Integrate/filename {integrateVariables} */
+/* Output/Integrate/variables {Impacter:rho, Impacter:rhoE, Impacter:rhoU, Impacter:rhokinE, Impacter:U, Impacter:kinE, Impacter:v,Plate:rho, Plate:rhoE, Plate:rhoU, Plate:rhokinE, Plate:U, Plate:kinE, Plate:v, Paint:rho, Paint:rhoE, Paint:rhoU, Paint:rhokinE, Paint:U, Paint:kinE, Paint:v, Paint:T} // we can determine the kinetic energy by subtracting rhoU from rhoE*rho in gnuplot */ 
+/* Output/Integrate/interval {1.e-06} */
+
+//refines the whole paint layer (unnecessary)
+/* Paint:Flagging/AllMaterial/active {true} */
+/* Paint:Flagging/AllMaterial/maxRefinementLevel {2} */
+//this creates a box around the impact area and we choose to refine this area based on density gradients
+/* Impacter:Flagging/Gradient/active {true} */
+/* Impacter:Flagging/Gradient/variables { Impacter:rho = 1000 } */ 
+/* Impacter:Flagging/Gradient/region { Box {X1 = 0.00, X2 = 0.002, Y1=0.005, Y2 = 0.015, Z1 = 0.0115, Z2 = 0.013}} */ 
+
+/* Plate:Flagging/Gradient/active {true} */
+/* Plate:Flagging/Gradient/variables { Plate:rho = 1000 } */ 
+/* Plate:Flagging/Gradient/region { Box {X1 = 0.00, X2 = 0.002, Y1=0.005, Y2 = 0.015, Z1 = 0.0115, Z2 = 0.013}} */ 
+//this creates a box around the impact area -- all refined
+
+System/flagMaterialsMaxLevel {MAX,MAX,MAX,MAX} //ball, plate, paint, vacuum
+System/boundaryFlagRegion {0.5} //default 0.75
+GEOM {Rectangle {X1=1.0MM, X2=3.0MM, Y1=0.5MM, Y2=1.5MM}}
+System/flagMaterialsRegion {GEOM, GEOM, GEOM, GEOM}
+System/flagMaterials {true, true, true, true}
+//can this be done with fixed mesh?
