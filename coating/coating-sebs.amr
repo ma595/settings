@@ -5,6 +5,7 @@
   STHICK 
   LEVELS 
   BGAP
+  SWIDTHMM / STHICKMM
 */
 
 // if sthick = 2 and basemm = 50
@@ -15,7 +16,7 @@
 
 //make substrate width some factor of projectile diameter. 
 
-Problem/materials {Projectile = SolidEntropyBasedStretch_0, Plate = SolidEntropyBasedStretch_0, Paint = SolidEntropyBasedStretch_1, Void = Vacuum}
+Problem/materials {Projectile = SolidEntropyBased_0, Plate = SolidEntropyBased_0, Paint = SolidEntropyBased_1, Void = Vacuum}
 
 VELMAG {35}
 ANGLE  {90}

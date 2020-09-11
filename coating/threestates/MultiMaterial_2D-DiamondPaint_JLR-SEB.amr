@@ -4,10 +4,11 @@
 /* A block of steel impacts a painted substrate at 60ms-1 at an angle of 30 degrees.
 */
 DATA {true}
-Problem/materials {Projectile = SolidEntropyBased_1, Plate = SolidEntropyBased_1, Paint = SolidEntropyBased_1, Void = Vacuum}
-MAX {2}
-CELLX {120}
-CELLY {80}
+Problem/materials {Projectile = SolidEntropyBased_1, Plate = SolidEntropyBased_1, Paint = SolidEntropyBased_1, Water = EulerInert, Air = EulerInert}
+/* CELLX {480} */
+/* CELLY {320} */
+CELLX {960}
+CELLY {640}
 
 // We use a simple MieGruneisen EoS for the steel, with Johnson-Cook plasticity, with parameters from Kapahi above.
 MieGruneisen_HardSteel {Separable{eos=MGSimple{rho0=7850, s=1.49, c0=4570, T0=298}, shear=Constant{G=77.3e9}}}
@@ -18,11 +19,24 @@ AluPlastic {Perfect {yield=0.4e9} }
 PMMAElastic {Separable {eos=MGSimple {rho0=1180, c0=2260, T0=300, s = 1.82}, shear=Constant {G=1.148e9}}}
 
 Projectile/elastic {MieGruneisen_MildSteel}
-Plate/elastic {MieGruneisen_MildSteel}
+Plate/elastic {MieGruneisen_HardSteel}
 Plate/plastic {JohnsonCook_MildSteel}
 Paint/elastic {PMMAElastic}
 Paint/plastic {Perfect {yield=72e6}}
 
+Air/eos {Ideal{Gamma=1.4, M=28.97, R=8314}}
+Water/eos {Stiffened{Gamma=4.4, cv=1.0, p0=6E8, T0=0.0}}
+
+
+/* Water:InitialData/MultipleRegions/active {true} */
+/* Water:InitialData/MultipleRegions/geometries {Rectangle{X1=-2.0e-3, X2=2.0e-3, Y1= 6.0e-3, Y2=10.5e-3}} */
+/* //, Rectangle{X1=-2.0e-3, X2=3.5e-3, Y1= 1.5e-3, Y2=3.0e-3}} */
+/* Water:InitialData/MultipleRegions/states {{rho=1000.0, v_x=0.0,v_y=-20, p=5e6 }} */
+/* Water:InitialData/MultipleRegions/ambientState  {rho=1000.0, v_x=0.0, v_y=0, p=101325 } */ 
+Air:InitialData/Uniform/active {true}
+Air:InitialData/Uniform/state {rho=1.2, v_x=0.0, v_y=0, p=101325 }
+Water:InitialData/Uniform/active {true}
+Water:InitialData/Uniform/state {rho=1000.0, v_x=0.0, v_y=-20, p=101325 }
 /* Impacter/quickTimeStep {6500} */ 
 /* Plate/quickTimeStep {6500} */
 /* Paint/quickTimeStep {6500} */
@@ -33,9 +47,9 @@ Interface/ProjectilePaint {interface=slip}
 
 UGFV {false}
 
-MaterialBoundaryCondition/modifyState {MODIFY}
+MaterialBoundaryCondition/modifyState {outside}
 MaterialBoundaryCondition/RiemannGhostFluid/active {true}
-MaterialBoundaryCondition/RiemannGhostFluid/useGhostFluidVelocity {UGFV}
+MaterialBoundaryCondition/RiemannGhostFluid/useGhostFluidVelocity {false}
 
 MM {e-3} // Helpful macro to make reading easier.
 
@@ -45,6 +59,7 @@ RADIUS { 3.15MM/2 }
 TRI_HEIGHT { RADIUS/tan(TRI_ANG/180*M_PI)} // derive this from radius
 RECT_HEIGHT { 5MM - TRI_HEIGHT } 
 GAP {0.20MM}
+LEVELS {0}
 
 CENTREX {-1.0MM}
 CENTREY {1.0MM + GAP}
@@ -56,23 +71,33 @@ LPARTICLE {Rotate{Union{TRIANGLE, RECTANGLE}, theta=PLANE_ANG/180*M_PI, axis={0,
 PARTICLE {Rotate{Rectangle{X1=CENTREX-RADIUS, X2=CENTREX+RADIUS, Y1=CENTREYP-RADIUS, Y2=CENTREYP+RADIUS}, theta=PI/4, axis={0,0,1}, origin={CENTREX,CENTREYP}} }
 
 Problem/regions {PARTICLE,
-		 Rectangle {X1=-15MM, X2=15MM, Y1=0.0MM, Y2=1.0MM},
-		 Rectangle {X1=-15MM, X2=15MM, Y1=1.0MM, Y2=1.5MM}}
+Rectangle {X1=-15MM, X2=15MM, Y1=0.0MM, Y2=1.0MM},
+Rectangle {X1=-15MM, X2=15MM, Y1=1.0MM, Y2=1.2MM}, 
+Rectangle {X1=-0.75MM, X2=1.0MM, Y1= 6.1MM, Y2=10.5MM}} 
 
 CoordMapping/Cartesian/domainMinimum {-6.0MM, 0.0MM}
 CoordMapping/Cartesian/domainMaximum { 6.0MM, 8.0MM}
 CoordMapping/Cartesian/active {true}
 
 Amr/cells {CELLX, CELLY}
-Amr/boundaryConditions { { reflective{stationary}, reflective{stationary} },
-			 { reflective{reflect}, transmissive } }
+/* Amr/boundaryConditions { { reflective{stationary}, reflective{stationary} }, */
+/* 			 { reflective{weld}, fixedStateInflow{state = {rho = 1000.0, v_x =0, v_y=-20, p=101325}}} } */
 
-Amr/CFL { 0.45 }
+
+Amr/boundaryConditions { { reflective{stationary}, reflective{stationary} },
+			 { reflective{weld}, transmissive} }
+
+/* Water:Amr/boundaryConditions { { transmissive, transmissive}, { , transmissive} } */
+
+/* Amr/boundaryConditions { { transmissive, transmissive }, { */
+/* fixedStateInflow{state = {rho=1000.0, v_x=0, v_y=((t < 10e-6) ? 0 : */
+/* 20), p=101325}}, transmissive } } */
+Amr/CFL { 0.80 }
 
 Amr/startTime { 0.0 }
 Amr/finalTime { 2.5e-4 } 
 
-Amr/maxRefinementLevel { MAX }
+Amr/maxRefinementLevel { LEVELS }
 Amr/refinementFactors { 2,2,2,2,2 }
 Amr/regridFrequency { 2 }
 Amr/loadBalanceFrequency { 20 }
@@ -97,22 +122,22 @@ FluxMethod/MUSCLHancock/active {true}
 FluxMethod/MUSCLHancock/limiter {van-Leer}
 FluxMethod/MUSCLHancock/solver {HLL}
 
-Output/directory {/rds/user/ma595/rds-hpc-support/ma595/phd/output/coating/JLR/2D/}
+Output/directory {/rds/user/ma595/rds-hpc-support/ma595/phd/output/coating/threestates/initial/CELLX_LEVELS_4}
 Output/times {0}
 /* Output/frequency {1} */
-Output/interval {1e-6}
+Output/interval {10e-6}
 Output/VisIt/active { DATA }
-Output/VisIt/filename {2D-CORES}
+Output/VisIt/filename {level_LEVELS}
 Output/VisIt/outputAllVars {true}
 Output/VisIt/outputGhost {true}
 
 Output/Checkpoint/active { DATA }
 Output/Checkpoint/filename {ball_checkpoint}
-Output/Checkpoint/interval {5e-6}
+Output/Checkpoint/interval {1e-5}
 
 LoadBalance/Zoltan/active {true}
 LoadBalance/Zoltan/method {RecursiveCoordBisection}
-LoadBalance/Zoltan/separateLevelWeighting {true}
+LoadBalance/Zoltan/separateLevelWeighting {false}
 LoadBalance/Zoltan/useHierarchy {false}
 /* LoadBalance/Zoltan/sockets {2} */
 /* LoadBalance/Zoltan/cores {8} */
@@ -122,7 +147,7 @@ Clustering/Rigoutsos/active {false}
 Clustering/Workload/active {true}
 ODEMethod/RK2/active {true}
 System/reinitFreq {1}
-LevelSetMethod/WENO/active {true}
+LevelSetMethod/UW9/active {true}
 
 // MA
 // Integrate modules 

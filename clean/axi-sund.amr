@@ -4,7 +4,7 @@
 // plate surface is at y = 0 
 //------------------------------------------------------------------------------------------------
 
-Problem/materials {Ball = SolidEntropyBasedStretch_0, Plate = SolidEntropyBasedStretch_1, Void = Vacuum}
+Problem/materials {Ball = SolidEntropyBased_0, Plate = SolidEntropyBased_1, Void = Vacuum}
 MM {e-3} 
 
 
