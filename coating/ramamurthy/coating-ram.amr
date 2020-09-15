@@ -55,7 +55,11 @@ PARTICLE {Circle{x=CENTREX, y=CENTREY, r=RADIUS}}
 PLATE {Rectangle {X1=-1.0MM, X2=SWIDTHMIL, Y1=BGAP, Y2=STHICK}}
 PAINT {Rectangle {X1=-1.0MM, X2=SWIDTHMIL, Y1=STHICK, Y2=STHICK + PTHICK}}
 
-Problem/regions {PARTICLE, PLATE, PAINT}
+REFBOT {PTHICK + GAP + STHICK - 1.60e-3*tan(30/180*M_PI)}
+
+PARTICLERAM { Polygon { {0,REFBOT +  1.60e-3*tan(30/180*M_PI)}, {1.60e-3, REFBOT + 1.60e-3*tan(30/180*M_PI)}, { RADIUS*cos(30/180*M_PI), REFBOT + RADIUS*sin(30/180*M_PI)}, {RADIUS*cos(30/180*M_PI), REFBOT + RADIUS*sin(30/180*M_PI) + RADIUS}, {0, REFBOT + 12MM}}}
+
+Problem/regions {PARTICLERAM, PLATE, PAINT}
 
 Plate/maxPlasticIterations {10}
 Paint/maxPlasticIterations {10}
@@ -105,7 +109,7 @@ System/vacuumSpecialCase {true}
 
 Amr/cells { CELLX, CELLY }
 Amr/boundaryConditions { { reflective{reflect}, reflective{stationary}}, { reflective{weld}, transmissive } }
-Amr/CFL { 0.9 }
+Amr/CFL { 0.8 }
 
 Amr/maxRefinementLevel { LEVELS }
 Amr/refinementFactors { 4,RF,2,2,2 }
