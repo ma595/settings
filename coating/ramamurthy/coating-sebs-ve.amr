@@ -5,6 +5,8 @@
   STHICK 
   LEVELS 
   BGAP
+  SWIDTHMM
+  DIAMETERMM
 */
 
 // if sthick = 2 and basemm = 50
@@ -13,6 +15,8 @@
 // CELLX = 4.0* 50 = 200
 // CELLY = 200 * 5/4 = 250.
 
+// sthick = 4.0MM
+
 //make substrate width some factor of projectile diameter. 
 
 Problem/materials {Projectile = SolidEntropyBased_0, Plate = SolidEntropyBased_0, Paint = SolidEntropyBased_1, Void = Vacuum}
@@ -20,29 +24,36 @@ Problem/materials {Projectile = SolidEntropyBased_0, Plate = SolidEntropyBased_0
 VELMAG {35}
 ANGLE  {90}
 
-/* CELLY  {CELLX * ((ydom)/(xdom))} */
-CELLX  {$BASEMM * ((xdom)/(1.e-3))}
-CELLY  {$BASEMM * ((ydom)/(1.e-3))}
-LEVELS {$LEVELS}
-
-xdom {$SWIDTHMM}
-ydom {$DIAMETERMM + 1MM + $STHICKMM + $BGAPMM} 
-
-DIAMETER {$DIAMETERMM}
-
 MM {e-3} 
-GAP {0.025MM}
+BASECELLS {20.0}
+STHICKMIL {4.0MM}
+LEVELS {0}
+SWIDTHMIL {15.0MM}
+DIAMETERMIL {12.0MM}
+RF {2}
+BGAPMIL {1.5MM}
+/* CELLY  {CELLX * ((ydom)/(xdom))} */
+CELLX  {BASECELLS * ((xdom)/(1.e-3))}
+CELLY  {BASECELLS * ((ydom)/(1.e-3))}
+LEVELS {LEVELS}
+
+xdom {SWIDTHMIL}
+ydom {DIAMETERMIL + STHICKMIL + 2.5MM} 
+
+DIAMETER {DIAMETERMIL}
+
+GAP {0.050MM}
 ROTFREQ {0} // Rotational frequency of the block
 ANGLE {90}
-RADIUS {DIAMETER/2} 
-PTHICK {0.10MM}
-STHICK {$STHICKMM}
-BGAP {$BGAPMM} // gap between the bottom of the plate and the boundary
+RADIUS {DIAMETER/2}
+PTHICK {0.20MM}
+STHICK {STHICKMIL}
+BGAP {BGAPMIL} // gap between the bottom of the plate and the boundary
 CENTREX {0.0MM}
 CENTREY {PTHICK + RADIUS + GAP + STHICK}
 PARTICLE {Circle{x=CENTREX, y=CENTREY, r=RADIUS}}
-PLATE {Rectangle {X1=-1.0MM, X2=15MM, Y1=0, Y2=STHICK}}
-PAINT {Rectangle {X1=-1.0MM, X2=15MM, Y1=STHICK, Y2=STHICK+PTHICK}}
+PLATE {Rectangle {X1=-1.0MM, X2=SWIDTHMIL, Y1=BGAP, Y2=STHICK}}
+PAINT {Rectangle {X1=-1.0MM, X2=SWIDTHMIL, Y1=STHICK, Y2=STHICK + PTHICK}}
 
 Problem/regions {PARTICLE, PLATE, PAINT}
 
@@ -53,7 +64,7 @@ Paint/yieldTolerance {1e-3}
 hlld {false}
 Interface/ProjectilePlate {interface=slip, useHLLD=hlld}
 Interface/ProjectilePaint {interface=slip, useHLLD=hlld}
-Interface/PaintPlate {interface=stick, useHLLD=hlld}
+Interface/PaintPlate {interface=weld, useHLLD=hlld}
 
 TIMESERIES {false}
 //-----------------------------------------------------------------------------------------------------------------
@@ -68,7 +79,7 @@ Projectile/elastic {MGS_HardSteel}
 Plate/elastic {MGS_Al2024_T3}
 Plate/plastic {P_Al2024_T3}
 Paint/elastic {MGS_PAC33_new}
-Paint/plastic {JC_PAC33}
+Paint/plastic {Perfect_PAC33}
 /* Paint/plastic {$PLASTIC_PAC33} */ 
 //JC_PAC33
 //*****************************
@@ -80,7 +91,7 @@ Plate:InitialData/Uniform/state { v_r=0.0,v_z=0}
 Paint:InitialData/Uniform/active {true}
 Paint:InitialData/Uniform/state { v_r=0.0,v_z=0}
 
-MaterialBoundaryCondition/RiemannGhostFluid/useGhostFluidVelocity {false}
+MaterialBoundaryCondition/RiemannGhostFluid/useGhostFluidVelocity {true}
 MaterialBoundaryCondition/RiemannGhostFluid/modifyState {outside}
 MaterialBoundaryCondition/RiemannGhostFluid/active {true}
 LevelSetMethod/WENO/active {true}
@@ -97,7 +108,7 @@ Amr/boundaryConditions { { reflective{reflect}, reflective{stationary}}, { refle
 Amr/CFL { 0.9 }
 
 Amr/maxRefinementLevel { LEVELS }
-Amr/refinementFactors { 4,$RF,2,2,2 }
+Amr/refinementFactors { 4,RF,2,2,2 }
 Amr/regridFrequency { 2 }
 Amr/loadBalanceFrequency { 10 }
 Amr/bufferWidth { 2 }
@@ -111,7 +122,7 @@ FluxMethod/MUSCLHancock/solver {HLL}
 
 ODEMethod/RK2/active {true}
 
-Output/directory {/home/ma595/output/coating/axi/boundaryeffects/}
+Output/directory {/home/ma595/output/coating/axi/ramamurthy/initial}
 Output/interval {2e-06}
 
 Output/VisIt/active {true}
@@ -158,7 +169,7 @@ Output/TimeSeries-1/interval {5e-8}
 Output/TimeSeries-1/continuousOutput {false}
 Output/TimeSeries-1/variables {Plate:sigma}
 /* Output/TimeSeries/points {Line{start={-5MM, 0MM}, end={5MM, 0MM}, points=CELLX}} */
-Output/TimeSeries-1/points {Line{start={-5MM, 1.0MM - (0.1MM)/(pow($LEVELS+1,2)*$CELLY)}, end={xdom, 1.0MM - (0.1MM)/(pow($LEVELS+1,2)*$CELLY)}, points=CELLX*($LEVELS+1)}}
+Output/TimeSeries-1/points {Line{start={-5MM, STHICK - (ydom)/(pow(LEVELS+1,2)*CELLY)}, end={xdom, STHICK - (ydom)/(pow(LEVELS+1,2)*CELLY)}, points=CELLX*(LEVELS+1)}}
 
 Output/TimeSeries-2/active {TIMESERIES}
 Output/TimeSeries-2/filename {interface-above}
@@ -167,7 +178,7 @@ Output/TimeSeries-2/frequency {0}
 Output/TimeSeries-2/interval {5e-8}
 Output/TimeSeries-2/continuousOutput {false}
 Output/TimeSeries-2/variables {Paint:sigma}
-Output/TimeSeries-2/points {Line{start={-5MM, 1.0MM + (0.1MM)/(pow($LEVELS+1,2)*$CELLY)}, end={xdom, 1.0MM + (0.1MM)/(pow($LEVELS+1,2)*$CELLY)}, points=CELLX*($LEVELS+1)}}
+Output/TimeSeries-2/points {Line{start={-5MM, STHICK + (ydom)/(pow(LEVELS+1,2)*CELLY)}, end={xdom, STHICK + (ydom)/(pow(LEVELS+1,2)*CELLY)}, points=CELLX*(LEVELS+1)}}
 
 Output/SettingsFile/active {true}
 Output/SettingsFile/filename {settings}
@@ -188,13 +199,13 @@ System/flagMaterials {true, true, true, true}
 /* Target:Flagging/Difference/variables { mom_x = 1e-1, mom_y=1e-1 } */
 
 Paint:Flagging/AllMaterial/active {true}
-Paint:Flagging/AllMaterial/maxRefinementLevel {$LEVELS}
+Paint:Flagging/AllMaterial/maxRefinementLevel {LEVELS}
 Paint:Flagging/AllMaterial/region {GEOM}
 Plate:Flagging/AllMaterial/active {true}
-Plate:Flagging/AllMaterial/maxRefinementLevel {$LEVELS}
+Plate:Flagging/AllMaterial/maxRefinementLevel {LEVELS}
 Plate:Flagging/AllMaterial/region {GEOM}
 Projectile:Flagging/AllMaterial/active {true}
-Projectile:Flagging/AllMaterial/maxRefinementLevel {$LEVELS}
+Projectile:Flagging/AllMaterial/maxRefinementLevel {LEVELS}
 Projectile:Flagging/AllMaterial/region {GEOM}
 /* Vacuum:Flagging/AllMaterial/active {true} */
 /* Vacuum:Flagging/AllMaterial/maxRefinementLevel {$LEVELS} */
