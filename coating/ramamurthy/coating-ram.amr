@@ -25,9 +25,9 @@ VELMAG {35}
 ANGLE  {90}
 
 MM {e-3} 
-BASECELLS {20.0}
+BASECELLS {10.0}
 STHICKMIL {4.0MM}
-LEVELS {0}
+LEVELS {1}
 SWIDTHMIL {15.0MM}
 DIAMETERMIL {12.0MM}
 RF {2}
@@ -112,7 +112,7 @@ Amr/boundaryConditions { { reflective{reflect}, reflective{stationary}}, { refle
 Amr/CFL { 0.8 }
 
 Amr/maxRefinementLevel { LEVELS }
-Amr/refinementFactors { 4,RF,2,2,2 }
+Amr/refinementFactors { 8,RF,2,2,2 }
 Amr/regridFrequency { 2 }
 Amr/loadBalanceFrequency { 10 }
 Amr/bufferWidth { 2 }
@@ -187,7 +187,7 @@ Output/TimeSeries-2/points {Line{start={-5MM, STHICK + (ydom)/(pow(LEVELS+1,2)*C
 Output/SettingsFile/active {true}
 Output/SettingsFile/filename {settings}
 
-GEOM {Rectangle {X1=-1.2MM, X2=DIAMETER/2.0, Y1=-DIAMETER/4.0, Y2=DIAMETER/4.0}}
+GEOM {Rectangle {X1=-1.2MM, X2=DIAMETER/3.0, Y1=STHICK - 1.0MM - STHICK/2.0, Y2=STHICK + 1.0MM}}
 System/flagMaterialsMaxLevel {LEVELS, LEVELS, LEVELS, LEVELS}
 System/boundaryFlagRegion {1} //default 0.75 
 System/flagMaterialsRegion {GEOM, GEOM, GEOM, GEOM}
