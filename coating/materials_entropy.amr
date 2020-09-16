@@ -3,10 +3,11 @@
  * PAINT 
 */
 
-/* MGH_PAC33 {Separable{eos=Hugoniot {rho0=1464, c0=2390, s=1.47, Gamma0=1.82, U0=0, cv=1466, T0=298}, shear=Constant{G=13.4e9}}} */
 /* MGS_PAC33 {Separable {eos=MGSimple {rho0=1264, c0=2390, T0=298, s = 1.31}, shear=Constant {G=1.34e9}}} //need to calc shear here. */
 
 MGS_PAC33 {Separable {eos=MGSimple {rho0=1264, c0=2390, T0=298, s = 1.31}, shear=Constant {G=1.34e9}}} //need to calc shear here.
+
+MGH_PAC33 {Separable{eos=HugoniotEntropyBased {rho0=1264, c0=2390, s=1.47, Gamma0=1.82, U0=0, cv=1466, T0=298}, shear=Constant{G=1.34e9}}}
 
 JC_PAC33 {JohnsonCook {A=0.146e9, B=0.150e9, C=0.097, n=0.498, m=1.0, epsdot0=1.0, T0=298, Tm=1836}}
 
@@ -21,6 +22,7 @@ None_PAC33 {None {}}
 */
 
 /* MGH_Al2024 {Separable{eos=Hugoniot {rho0=2784, c0=5240, s=1.29, Gamma0=2.192, U0=0, cv=880, T0=298}, shear=Constant{G=26e9}}} */
+
 
 MGS_Al2024_T3 {Separable{eos=MGSimple{rho0=2784, s=1.29, c0=5240, T0=298}, shear=Constant{G=26e9}}}
 
